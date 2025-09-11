@@ -165,7 +165,7 @@ public class PaymentService implements IPaymentService {
     @Override
     @Transactional(readOnly = true)
     public List<Payment> findByStudentId(Integer studentId) {
-        return paymentRepository.findByStudentId(studentId);
+        return paymentRepository.findByStudentStuId(studentId);
     }
     
     // 缴费类型查询

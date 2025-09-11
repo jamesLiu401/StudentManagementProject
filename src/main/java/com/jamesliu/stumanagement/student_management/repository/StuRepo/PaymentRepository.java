@@ -49,10 +49,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     @NonNull
     List<Payment> findByStudentStuId(@NonNull Integer studentId);
     
-    // 根据学生ID查询缴费记录（简化方法名）
-    @NonNull
-    List<Payment> findByStudentId(@NonNull Integer studentId);
-    
     // 根据缴费状态查询
     @NonNull
     List<Payment> findByPaymentStatus(@NonNull String paymentStatus);
