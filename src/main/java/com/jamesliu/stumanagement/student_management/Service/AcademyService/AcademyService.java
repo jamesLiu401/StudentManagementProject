@@ -112,13 +112,13 @@ public class AcademyService implements IAcademyService {
     @Override
     @Transactional(readOnly = true)
     public Page<Academy> findByAcademyNameContaining(String name, Pageable pageable) {
-        return academyRepository.findByAcademyNameContainingAndPageable(name, pageable);
+        return academyRepository.findByAcademyNameContaining(name, pageable);
     }
     
     @Override
     @Transactional(readOnly = true)
     public Page<Academy> findByDeanName(String deanName, Pageable pageable) {
-        return academyRepository.findByDeanNameAndPageable(deanName, pageable);
+        return academyRepository.findByDeanName(deanName, pageable);
     }
     
     // 统计操作
