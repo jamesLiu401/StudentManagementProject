@@ -8,12 +8,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 缴费记录数据访问接口
@@ -92,7 +91,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     
     // 根据金额范围查询
     @NonNull
-    List<Payment> findByAmountBetween(@NonNull Double minAmount, @NonNull Double maxAmount);
+    List<Payment> findByAmountBetween(Double amount, Double amount2);
     
     // 根据缴费日期查询
     @NonNull
@@ -112,7 +111,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     
     // 根据学生对象和金额范围查询
     @NonNull
-    List<Payment> findByStudentAndAmountBetween(@NonNull Student student, @NonNull Double minAmount, @NonNull Double maxAmount);
+    List<Payment> findByStudentAndAmountBetween(Student student, Double amount, Double amount2);
     
     // 根据学生ID和缴费类型查询
     @NonNull
