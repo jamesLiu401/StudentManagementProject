@@ -131,13 +131,13 @@ public class MajorService implements IMajorService {
     @Override
     @Transactional(readOnly = true)
     public Page<Major> findByAcademy(Academy academy, Pageable pageable) {
-        return majorRepository.findByAcademyAndPageable(academy, pageable);
+        return majorRepository.findByAcademy(academy, pageable);
     }
     
     @Override
     @Transactional(readOnly = true)
     public Page<Major> findByGrade(Integer grade, Pageable pageable) {
-        return majorRepository.findByGradeAndPageable(grade, pageable);
+        return majorRepository.findByGrade(grade, pageable);
     }
     
     @Override
@@ -149,7 +149,7 @@ public class MajorService implements IMajorService {
     @Override
     @Transactional(readOnly = true)
     public Page<Major> findByMajorNameContaining(String name, Pageable pageable) {
-        return majorRepository.findByMajorNameContainingAndPageable(name, pageable);
+        return majorRepository.findByMajorNameContaining(name, pageable);
     }
     
     // 统计操作

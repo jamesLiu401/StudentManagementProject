@@ -30,7 +30,7 @@ public interface MajorRepository extends JpaRepository<Major, Integer> {
     
     // 根据学院分页查询
     @NonNull
-    Page<Major> findByAcademyAndPageable(@NonNull Academy academy, @NonNull Pageable pageable);
+    Page<Major> findByAcademy(@NonNull Academy academy, @NonNull Pageable pageable);
     
     // 根据年级查询
     @NonNull
@@ -38,7 +38,7 @@ public interface MajorRepository extends JpaRepository<Major, Integer> {
     
     // 根据年级分页查询
     @NonNull
-    Page<Major> findByGradeAndPageable(@NonNull Integer grade, @NonNull Pageable pageable);
+    Page<Major> findByGrade(@NonNull Integer grade, @NonNull Pageable pageable);
     
     // 根据专业名称模糊查询
     @NonNull
@@ -62,7 +62,7 @@ public interface MajorRepository extends JpaRepository<Major, Integer> {
     
     // 根据专业名称模糊分页查询
     @NonNull
-    Page<Major> findByMajorNameContainingAndPageable(@NonNull String name, @NonNull Pageable pageable);
+    Page<Major> findByMajorNameContaining(@NonNull String name, @NonNull Pageable pageable);
     
     // 统计方法
     long countByCounselor(@NonNull Teacher counselor);

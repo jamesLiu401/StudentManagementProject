@@ -121,7 +121,7 @@ public class TeacherService implements ITeacherService {
     @Override
     @Transactional(readOnly = true)
     public Page<Teacher> findByTeacherNameContaining(String name, Pageable pageable) {
-        return teacherRepository.findByTeacherNameContainingAndPageable(name, pageable);
+        return teacherRepository.findByTeacherNameContaining(name, pageable);
     }
     
     // 统计操作
