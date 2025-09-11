@@ -144,7 +144,7 @@ public class CascadeManagementService {
             }
             
             Optional<Major> targetMajor = majorRepository.findById(targetMajorId);
-            if (!targetMajor.isPresent()) {
+            if (targetMajor.isEmpty()) {
                 throw new RuntimeException("目标专业不存在");
             }
             
@@ -187,7 +187,7 @@ public class CascadeManagementService {
             }
             
             Optional<TotalClass> targetTotalClass = totalClassRepository.findById(targetTotalClassId);
-            if (!targetTotalClass.isPresent()) {
+            if (targetTotalClass.isEmpty()) {
                 throw new RuntimeException("目标大班不存在");
             }
             
@@ -414,7 +414,7 @@ public class CascadeManagementService {
         if (academyId != null) {
             // 查询指定学院
             Optional<Academy> academy = academyRepository.findById(academyId);
-            if (!academy.isPresent()) {
+            if (academy.isEmpty()) {
                 throw new RuntimeException("学院不存在");
             }
             academies = List.of(academy.get());
@@ -482,11 +482,11 @@ public class CascadeManagementService {
         
         // 如果只查询一个学院，直接返回该学院的结构
         if (academyId != null && !hierarchyList.isEmpty()) {
-            return hierarchyList.get(0);
+            return hierarchyList.getFirst();
         }
         
         // 如果查询所有学院，返回第一个学院的结构（可以根据需要调整）
-        return hierarchyList.isEmpty() ? new CascadeOperationDTO.HierarchyStructureDTO() : hierarchyList.get(0);
+        return hierarchyList.isEmpty() ? new CascadeOperationDTO.HierarchyStructureDTO() : hierarchyList.getFirst();
     }
 
     /**
@@ -521,7 +521,7 @@ public class CascadeManagementService {
     
     private CascadeOperationDTO.DeletePreviewDTO getAcademyDeletePreview(Integer academyId, CascadeOperationDTO.DeletePreviewDTO preview) {
         Optional<Academy> academy = academyRepository.findById(academyId);
-        if (!academy.isPresent()) {
+        if (academy.isEmpty()) {
             preview.setCanDelete(false);
             preview.setWarningMessage("学院不存在");
             return preview;
@@ -550,7 +550,7 @@ public class CascadeManagementService {
                     long studentCount = studentRepository.countByStuClass(subClass);
                     if (studentCount > 0) {
                         preview.getAffectedItems().add("      学生: " + studentCount + "人");
-                        totalAffected += studentCount;
+                        totalAffected += (int) studentCount;
                     }
                 }
             }
@@ -565,7 +565,7 @@ public class CascadeManagementService {
     
     private CascadeOperationDTO.DeletePreviewDTO getMajorDeletePreview(Integer majorId, CascadeOperationDTO.DeletePreviewDTO preview) {
         Optional<Major> major = majorRepository.findById(majorId);
-        if (!major.isPresent()) {
+        if (major.isEmpty()) {
             preview.setCanDelete(false);
             preview.setWarningMessage("专业不存在");
             return preview;
@@ -589,7 +589,7 @@ public class CascadeManagementService {
                 long studentCount = studentRepository.countByStuClass(subClass);
                 if (studentCount > 0) {
                     preview.getAffectedItems().add("    学生: " + studentCount + "人");
-                    totalAffected += studentCount;
+                    totalAffected += (int) studentCount;
                 }
             }
         }
@@ -603,7 +603,7 @@ public class CascadeManagementService {
     
     private CascadeOperationDTO.DeletePreviewDTO getTotalClassDeletePreview(Integer totalClassId, CascadeOperationDTO.DeletePreviewDTO preview) {
         Optional<TotalClass> totalClass = totalClassRepository.findById(totalClassId);
-        if (!totalClass.isPresent()) {
+        if (totalClass.isEmpty()) {
             preview.setCanDelete(false);
             preview.setWarningMessage("大班不存在");
             return preview;
@@ -622,7 +622,7 @@ public class CascadeManagementService {
             long studentCount = studentRepository.countByStuClass(subClass);
             if (studentCount > 0) {
                 preview.getAffectedItems().add("  学生: " + studentCount + "人");
-                totalAffected += studentCount;
+                totalAffected += (int) studentCount;
             }
         }
         
@@ -635,7 +635,7 @@ public class CascadeManagementService {
     
     private CascadeOperationDTO.DeletePreviewDTO getSubClassDeletePreview(Integer subClassId, CascadeOperationDTO.DeletePreviewDTO preview) {
         Optional<SubClass> subClass = subClassRepository.findById(subClassId);
-        if (!subClass.isPresent()) {
+        if (subClass.isEmpty()) {
             preview.setCanDelete(false);
             preview.setWarningMessage("小班不存在");
             return preview;
@@ -649,7 +649,7 @@ public class CascadeManagementService {
         
         if (studentCount > 0) {
             preview.getAffectedItems().add("学生: " + studentCount + "人");
-            totalAffected += studentCount;
+            totalAffected += (int) studentCount;
         }
         
         preview.setAffectedRecords(totalAffected);
@@ -691,7 +691,7 @@ public class CascadeManagementService {
     private void batchUpdateAcademies(List<CascadeOperationDTO.BatchUpdateRequest.UpdateItem> updates) {
         for (CascadeOperationDTO.BatchUpdateRequest.UpdateItem item : updates) {
             Optional<Academy> academy = academyRepository.findById(item.getId());
-            if (!academy.isPresent()) {
+            if (academy.isEmpty()) {
                 throw new RuntimeException("学院不存在: " + item.getId());
             }
             
@@ -726,7 +726,7 @@ public class CascadeManagementService {
     private void batchUpdateMajors(List<CascadeOperationDTO.BatchUpdateRequest.UpdateItem> updates) {
         for (CascadeOperationDTO.BatchUpdateRequest.UpdateItem item : updates) {
             Optional<Major> major = majorRepository.findById(item.getId());
-            if (!major.isPresent()) {
+            if (major.isEmpty()) {
                 throw new RuntimeException("专业不存在: " + item.getId());
             }
             
@@ -738,7 +738,7 @@ public class CascadeManagementService {
             // 处理父级关系（学院）
             if (item.getParentId() != null) {
                 Optional<Academy> academy = academyRepository.findById(item.getParentId());
-                if (!academy.isPresent()) {
+                if (academy.isEmpty()) {
                     throw new RuntimeException("目标学院不存在: " + item.getParentId());
                 }
                 majorEntity.setAcademy(academy.get());
@@ -765,7 +765,7 @@ public class CascadeManagementService {
     private void batchUpdateTotalClasses(List<CascadeOperationDTO.BatchUpdateRequest.UpdateItem> updates) {
         for (CascadeOperationDTO.BatchUpdateRequest.UpdateItem item : updates) {
             Optional<TotalClass> totalClass = totalClassRepository.findById(item.getId());
-            if (!totalClass.isPresent()) {
+            if (totalClass.isEmpty()) {
                 throw new RuntimeException("大班不存在: " + item.getId());
             }
             
@@ -777,7 +777,7 @@ public class CascadeManagementService {
             // 处理父级关系（专业）
             if (item.getParentId() != null) {
                 Optional<Major> major = majorRepository.findById(item.getParentId());
-                if (!major.isPresent()) {
+                if (major.isEmpty()) {
                     throw new RuntimeException("目标专业不存在: " + item.getParentId());
                 }
                 totalClassEntity.setMajor(major.get());
@@ -790,7 +790,7 @@ public class CascadeManagementService {
     private void batchUpdateSubClasses(List<CascadeOperationDTO.BatchUpdateRequest.UpdateItem> updates) {
         for (CascadeOperationDTO.BatchUpdateRequest.UpdateItem item : updates) {
             Optional<SubClass> subClass = subClassRepository.findById(item.getId());
-            if (!subClass.isPresent()) {
+            if (subClass.isEmpty()) {
                 throw new RuntimeException("小班不存在: " + item.getId());
             }
             
@@ -802,7 +802,7 @@ public class CascadeManagementService {
             // 处理父级关系（大班）
             if (item.getParentId() != null) {
                 Optional<TotalClass> totalClass = totalClassRepository.findById(item.getParentId());
-                if (!totalClass.isPresent()) {
+                if (totalClass.isEmpty()) {
                     throw new RuntimeException("目标大班不存在: " + item.getParentId());
                 }
                 subClassEntity.setTotalClass(totalClass.get());
@@ -822,7 +822,7 @@ public class CascadeManagementService {
     public void cascadeDeleteAcademySubjects(Integer academyId, Integer targetAcademyId) {
         // 获取学院信息
         Optional<Academy> academy = academyRepository.findById(academyId);
-        if (!academy.isPresent()) {
+        if (academy.isEmpty()) {
             throw new RuntimeException("学院不存在: " + academyId);
         }
         
@@ -831,7 +831,7 @@ public class CascadeManagementService {
         if (targetAcademyId != null) {
             // 将课程转移到目标学院
             Optional<Academy> targetAcademy = academyRepository.findById(targetAcademyId);
-            if (!targetAcademy.isPresent()) {
+            if (targetAcademy.isEmpty()) {
                 throw new RuntimeException("目标学院不存在: " + targetAcademyId);
             }
             
