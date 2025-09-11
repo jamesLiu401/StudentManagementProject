@@ -1,6 +1,8 @@
 package com.jamesliu.stumanagement.student_management.repository.StuRepo;
 
 import com.jamesliu.stumanagement.student_management.Entity.Student.Academy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
