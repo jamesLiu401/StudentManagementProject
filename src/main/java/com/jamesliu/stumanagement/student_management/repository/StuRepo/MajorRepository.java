@@ -28,9 +28,17 @@ public interface MajorRepository extends JpaRepository<Major, Integer> {
     @NonNull
     List<Major> findByAcademy(@NonNull Academy academy);
     
+    // 根据学院分页查询
+    @NonNull
+    Page<Major> findByAcademyAndPageable(@NonNull Academy academy, @NonNull Pageable pageable);
+    
     // 根据年级查询
     @NonNull
     List<Major> findByGrade(@NonNull Integer grade);
+    
+    // 根据年级分页查询
+    @NonNull
+    Page<Major> findByGradeAndPageable(@NonNull Integer grade, @NonNull Pageable pageable);
     
     // 根据专业名称模糊查询
     @NonNull

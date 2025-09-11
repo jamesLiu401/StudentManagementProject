@@ -254,19 +254,20 @@ public class StudentService implements IStudentService {
      * 确保学院存在
      */
     private Academy ensureAcademyExists(String academyName) {
-        if (academyName == null) {
-            academyName = "默认学院";
+        String finalAcademyName = academyName;
+        if (finalAcademyName == null) {
+            finalAcademyName = "默认学院";
         }
         
         // 查找现有学院
-        Optional<Academy> existingAcademy = academyRepository.findByAcademyName(academyName);
+        Optional<Academy> existingAcademy = academyRepository.findByAcademyName(finalAcademyName);
         if (existingAcademy.isPresent()) {
             return existingAcademy.get();
         }
         
         // 创建新学院
         Academy academy = new Academy();
-        academy.setAcademyName(academyName);
+        academy.setAcademyName(finalAcademyName);
         academy.setAcademyCode("DEFAULT");
         academy.setDescription("默认学院");
         return academyRepository.save(academy);

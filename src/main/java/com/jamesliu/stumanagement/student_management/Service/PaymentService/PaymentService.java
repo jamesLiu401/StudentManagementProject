@@ -481,7 +481,7 @@ public class PaymentService implements IPaymentService {
         Payment payment = new Payment();
         payment.setStudent(student);
         payment.setPaymentType(paymentType);
-        payment.setAmount(amount);
+        payment.setAmount(amount.doubleValue());
         payment.setPaymentStatus(paymentStatus);
         payment.setDescription(description);
         payment.setPaymentDate(LocalDate.now());
@@ -517,7 +517,7 @@ public class PaymentService implements IPaymentService {
         }
         
         if (paymentType != null) payment.setPaymentType(paymentType);
-        if (amount != null) payment.setAmount(amount);
+        if (amount != null) payment.setAmount(amount.doubleValue());
         if (paymentStatus != null) payment.setPaymentStatus(paymentStatus);
         if (description != null) payment.setDescription(description);
         
