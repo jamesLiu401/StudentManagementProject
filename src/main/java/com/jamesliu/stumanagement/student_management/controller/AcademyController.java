@@ -2,7 +2,7 @@ package com.jamesliu.stumanagement.student_management.controller;
 
 import com.jamesliu.stumanagement.student_management.Entity.ResponseMessage;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Academy;
-import com.jamesliu.stumanagement.student_management.repository.StuRepo.AcademyRepository;
+import com.jamesliu.stumanagement.student_management.Service.AcademyService.IAcademyService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,10 +35,10 @@ import java.util.Optional;
 @RequestMapping("/academies")
 public class AcademyController {
 
-    private final AcademyRepository academyRepository;
+    private final IAcademyService academyService;
 
-    public AcademyController(AcademyRepository academyRepository) {
-        this.academyRepository = academyRepository;
+    public AcademyController(IAcademyService academyService) {
+        this.academyService = academyService;
     }
 
     /**
@@ -50,19 +50,12 @@ public class AcademyController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseMessage<Academy> addAcademy(@RequestBody Academy academy) {
-        // 检查学院名称是否已存在
-        if (academyRepository.findByAcademyName(academy.getAcademyName()).isPresent()) {
-            return ResponseMessage.error("学院名称已存在");
+        try {
+            Academy savedAcademy = academyService.saveAcademy(academy);
+            return ResponseMessage.success(savedAcademy);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
         }
-        
-        // 检查学院代码是否已存在
-        if (academy.getAcademyCode() != null && 
-            academyRepository.findByAcademyCode(academy.getAcademyCode()).isPresent()) {
-            return ResponseMessage.error("学院代码已存在");
-        }
-        
-        Academy savedAcademy = academyRepository.save(academy);
-        return ResponseMessage.success(savedAcademy);
     }
 
     /**
@@ -77,33 +70,14 @@ public class AcademyController {
     public ResponseMessage<Academy> updateAcademy(
             @PathVariable Integer id, 
             @RequestBody Academy academy) {
-        return academyRepository.findById(id)
-                .map(existingAcademy -> {
-                    // 检查学院名称是否与其他学院冲突
-                    Optional<Academy> nameConflict = academyRepository.findByAcademyName(academy.getAcademyName());
-                    if (nameConflict.isPresent() && !nameConflict.get().getAcademyId().equals(id)) {
-                        throw new RuntimeException("学院名称已存在");
-                    }
-                    
-                    // 检查学院代码是否与其他学院冲突
-                    if (academy.getAcademyCode() != null) {
-                        Optional<Academy> codeConflict = academyRepository.findByAcademyCode(academy.getAcademyCode());
-                        if (codeConflict.isPresent() && !codeConflict.get().getAcademyId().equals(id)) {
-                            throw new RuntimeException("学院代码已存在");
-                        }
-                    }
-                    
-                    existingAcademy.setAcademyName(academy.getAcademyName());
-                    existingAcademy.setAcademyCode(academy.getAcademyCode());
-                    existingAcademy.setDescription(academy.getDescription());
-                    existingAcademy.setDeanName(academy.getDeanName());
-                    existingAcademy.setContactPhone(academy.getContactPhone());
-                    existingAcademy.setAddress(academy.getAddress());
-                    
-                    return academyRepository.save(existingAcademy);
-                })
-                .map(ResponseMessage::success)
-                .orElse(ResponseMessage.error("学院不存在"));
+        try {
+            Academy updatedAcademy = academyService.updateAcademy(id,
+                academy.getAcademyName(), academy.getAcademyCode(), academy.getDescription(),
+                academy.getDeanName(), academy.getContactPhone(), academy.getAddress());
+            return ResponseMessage.success(updatedAcademy);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
+        }
     }
 
     /**
@@ -115,11 +89,8 @@ public class AcademyController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseMessage<String> deleteAcademy(@PathVariable Integer id) {
-        if (academyRepository.existsById(id)) {
-            academyRepository.deleteById(id);
-            return ResponseMessage.success("学院删除成功");
-        }
-        return ResponseMessage.error("学院不存在");
+        academyService.deleteById(id);
+        return ResponseMessage.success("学院删除成功");
     }
 
     /**
@@ -131,7 +102,7 @@ public class AcademyController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<Academy> getAcademyById(@PathVariable Integer id) {
-        Optional<Academy> academy = academyRepository.findById(id);
+        Optional<Academy> academy = academyService.findById(id);
         return academy.map(ResponseMessage::success)
                 .orElse(ResponseMessage.error("学院不存在"));
     }
@@ -144,7 +115,7 @@ public class AcademyController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<List<Academy>> getAllAcademies() {
-        List<Academy> academies = academyRepository.findAll();
+        List<Academy> academies = academyService.findAll();
         return ResponseMessage.success(academies);
     }
 
@@ -169,7 +140,7 @@ public class AcademyController {
                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Academy> academies = academyRepository.findAll(pageable);
+        Page<Academy> academies = academyService.findAll(pageable);
         return ResponseMessage.success(academies);
     }
 
@@ -182,7 +153,7 @@ public class AcademyController {
     @GetMapping("/search/name")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<List<Academy>> searchAcademiesByName(@RequestParam String name) {
-        List<Academy> academies = academyRepository.findByAcademyNameContaining(name);
+        List<Academy> academies = academyService.searchAcademies(name);
         return ResponseMessage.success(academies);
     }
 
@@ -195,7 +166,7 @@ public class AcademyController {
     @GetMapping("/dean/{deanName}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<List<Academy>> getAcademiesByDean(@PathVariable String deanName) {
-        List<Academy> academies = academyRepository.findByDeanName(deanName);
+        List<Academy> academies = academyService.findByDeanName(deanName);
         return ResponseMessage.success(academies);
     }
 
@@ -208,7 +179,7 @@ public class AcademyController {
     @GetMapping("/search/dean")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<List<Academy>> searchAcademiesByDean(@RequestParam String deanName) {
-        List<Academy> academies = academyRepository.findByDeanNameContaining(deanName);
+        List<Academy> academies = academyService.findByDeanName(deanName);
         return ResponseMessage.success(academies);
     }
 
@@ -221,7 +192,7 @@ public class AcademyController {
     @GetMapping("/name/{name}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<Academy> getAcademyByName(@PathVariable String name) {
-        Optional<Academy> academy = academyRepository.findByAcademyName(name);
+        Optional<Academy> academy = academyService.findByAcademyName(name);
         return academy.map(ResponseMessage::success)
                 .orElse(ResponseMessage.error("学院不存在"));
     }
@@ -235,7 +206,7 @@ public class AcademyController {
     @GetMapping("/code/{code}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<Academy> getAcademyByCode(@PathVariable String code) {
-        Optional<Academy> academy = academyRepository.findByAcademyCode(code);
+        Optional<Academy> academy = academyService.findByAcademyCode(code);
         return academy.map(ResponseMessage::success)
                 .orElse(ResponseMessage.error("学院代码不存在"));
     }

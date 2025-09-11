@@ -4,9 +4,9 @@ import com.jamesliu.stumanagement.student_management.Entity.ResponseMessage;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Academy;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Major;
 import com.jamesliu.stumanagement.student_management.Entity.Teacher.Teacher;
-import com.jamesliu.stumanagement.student_management.repository.StuRepo.AcademyRepository;
-import com.jamesliu.stumanagement.student_management.repository.StuRepo.MajorRepository;
-import com.jamesliu.stumanagement.student_management.repository.TeacherRepo.TeacherRepository;
+import com.jamesliu.stumanagement.student_management.Service.MajorService.IMajorService;
+import com.jamesliu.stumanagement.student_management.Service.AcademyService.IAcademyService;
+import com.jamesliu.stumanagement.student_management.Service.TeacherService.ITeacherService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,16 +39,16 @@ import java.util.Optional;
 @RequestMapping("/majors")
 public class MajorController {
 
-    private final MajorRepository majorRepository;
-    private final AcademyRepository academyRepository;
-    private final TeacherRepository teacherRepository;
+    private final IMajorService majorService;
+    private final IAcademyService academyService;
+    private final ITeacherService teacherService;
 
-    public MajorController(MajorRepository majorRepository,
-                          AcademyRepository academyRepository,
-                          TeacherRepository teacherRepository) {
-        this.majorRepository = majorRepository;
-        this.academyRepository = academyRepository;
-        this.teacherRepository = teacherRepository;
+    public MajorController(IMajorService majorService,
+                          IAcademyService academyService,
+                          ITeacherService teacherService) {
+        this.majorService = majorService;
+        this.academyService = academyService;
+        this.teacherService = teacherService;
     }
 
     /**
@@ -60,33 +60,12 @@ public class MajorController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseMessage<Major> addMajor(@RequestBody Major major) {
-        // 检查学院是否存在
-        if (major.getAcademy() == null || major.getAcademy().getAcademyId() == null) {
-            return ResponseMessage.error("学院信息不能为空");
+        try {
+            Major savedMajor = majorService.saveMajor(major);
+            return ResponseMessage.success(savedMajor);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
         }
-        
-        Optional<Academy> academy = academyRepository.findById(major.getAcademy().getAcademyId());
-        if (!academy.isPresent()) {
-            return ResponseMessage.error("学院不存在");
-        }
-        
-        // 检查专业名称和年级是否已存在
-        if (majorRepository.findByMajorNameAndGrade(major.getMajorName(), major.getGrade()).isPresent()) {
-            return ResponseMessage.error("该年级的专业已存在");
-        }
-        
-        // 检查辅导员是否存在
-        if (major.getCounselor() != null && major.getCounselor().getTeacherId() != null) {
-            Optional<Teacher> counselor = teacherRepository.findById(major.getCounselor().getTeacherId());
-            if (!counselor.isPresent()) {
-                return ResponseMessage.error("辅导员不存在");
-            }
-            major.setCounselor(counselor.get());
-        }
-        
-        major.setAcademy(academy.get());
-        Major savedMajor = majorRepository.save(major);
-        return ResponseMessage.success(savedMajor);
     }
 
     /**
@@ -101,47 +80,13 @@ public class MajorController {
     public ResponseMessage<Major> updateMajor(
             @PathVariable Integer id, 
             @RequestBody Major major) {
-        return majorRepository.findById(id)
-                .map(existingMajor -> {
-                    // 检查学院是否存在
-                    if (major.getAcademy() != null && major.getAcademy().getAcademyId() != null) {
-                        Optional<Academy> academy = academyRepository.findById(major.getAcademy().getAcademyId());
-                        if (!academy.isPresent()) {
-                            throw new RuntimeException("学院不存在");
-                        }
-                        existingMajor.setAcademy(academy.get());
-                    }
-                    
-                    // 检查专业名称和年级是否与其他专业冲突
-                    if (major.getMajorName() != null && major.getGrade() != null) {
-                        Optional<Major> conflict = majorRepository.findByMajorNameAndGrade(major.getMajorName(), major.getGrade());
-                        if (conflict.isPresent() && !conflict.get().getMajorId().equals(id)) {
-                            throw new RuntimeException("该年级的专业已存在");
-                        }
-                    }
-                    
-                    // 检查辅导员是否存在
-                    if (major.getCounselor() != null && major.getCounselor().getTeacherId() != null) {
-                        Optional<Teacher> counselor = teacherRepository.findById(major.getCounselor().getTeacherId());
-                        if (!counselor.isPresent()) {
-                            throw new RuntimeException("辅导员不存在");
-                        }
-                        existingMajor.setCounselor(counselor.get());
-                    } else {
-                        existingMajor.setCounselor(null);
-                    }
-                    
-                    if (major.getMajorName() != null) {
-                        existingMajor.setMajorName(major.getMajorName());
-                    }
-                    if (major.getGrade() != null) {
-                        existingMajor.setGrade(major.getGrade());
-                    }
-                    
-                    return majorRepository.save(existingMajor);
-                })
-                .map(ResponseMessage::success)
-                .orElse(ResponseMessage.error("专业不存在"));
+        try {
+            Major updatedMajor = majorService.updateMajor(id, major.getMajorName(), 
+                major.getAcademy(), major.getGrade(), major.getCounselor());
+            return ResponseMessage.success(updatedMajor);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
+        }
     }
 
     /**
@@ -153,11 +98,8 @@ public class MajorController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseMessage<String> deleteMajor(@PathVariable Integer id) {
-        if (majorRepository.existsById(id)) {
-            majorRepository.deleteById(id);
-            return ResponseMessage.success("专业删除成功");
-        }
-        return ResponseMessage.error("专业不存在");
+        majorService.deleteById(id);
+        return ResponseMessage.success("专业删除成功");
     }
 
     /**
@@ -169,7 +111,7 @@ public class MajorController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<Major> getMajorById(@PathVariable Integer id) {
-        Optional<Major> major = majorRepository.findById(id);
+        Optional<Major> major = majorService.findById(id);
         return major.map(ResponseMessage::success)
                 .orElse(ResponseMessage.error("专业不存在"));
     }
@@ -182,7 +124,7 @@ public class MajorController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<List<Major>> getAllMajors() {
-        List<Major> majors = majorRepository.findAll();
+        List<Major> majors = majorService.findAll();
         return ResponseMessage.success(majors);
     }
 
@@ -207,7 +149,7 @@ public class MajorController {
                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Major> majors = majorRepository.findAll(pageable);
+        Page<Major> majors = majorService.findAll(pageable);
         return ResponseMessage.success(majors);
     }
 
@@ -220,12 +162,7 @@ public class MajorController {
     @GetMapping("/academy/{academyId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<List<Major>> getMajorsByAcademy(@PathVariable Integer academyId) {
-        Optional<Academy> academy = academyRepository.findById(academyId);
-        if (!academy.isPresent()) {
-            return ResponseMessage.error("学院不存在");
-        }
-        
-        List<Major> majors = majorRepository.findByAcademy(academy.get());
+        List<Major> majors = majorService.getMajorsByAcademyId(academyId);
         return ResponseMessage.success(majors);
     }
 
@@ -238,7 +175,7 @@ public class MajorController {
     @GetMapping("/grade/{grade}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<List<Major>> getMajorsByGrade(@PathVariable Integer grade) {
-        List<Major> majors = majorRepository.findByGrade(grade);
+        List<Major> majors = majorService.getMajorsByGrade(grade);
         return ResponseMessage.success(majors);
     }
 
@@ -251,7 +188,7 @@ public class MajorController {
     @GetMapping("/name/{majorName}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<List<Major>> getMajorsByName(@PathVariable String majorName) {
-        List<Major> majors = majorRepository.findByMajorName(majorName);
+        List<Major> majors = majorService.searchMajors(majorName);
         return ResponseMessage.success(majors);
     }
 }

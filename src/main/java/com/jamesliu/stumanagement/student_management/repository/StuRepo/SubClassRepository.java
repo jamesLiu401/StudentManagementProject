@@ -24,4 +24,8 @@ public interface SubClassRepository extends JpaRepository<SubClass, Integer> {
     // 根据大班查询
     @NonNull
     List<SubClass> findByTotalClass(@NonNull TotalClass totalClass);
+    
+    // 根据班级名称模糊查询
+    @NonNull
+    List<SubClass> findBySubClassNameContaining(@NonNull String name);
 }

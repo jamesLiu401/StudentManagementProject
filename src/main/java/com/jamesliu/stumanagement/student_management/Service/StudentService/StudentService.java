@@ -6,6 +6,7 @@ import com.jamesliu.stumanagement.student_management.repository.StuRepo.StudentR
 import com.jamesliu.stumanagement.student_management.repository.StuRepo.SubClassRepository;
 import com.jamesliu.stumanagement.student_management.repository.StuRepo.TotalClassRepository;
 import com.jamesliu.stumanagement.student_management.repository.StuRepo.MajorRepository;
+import com.jamesliu.stumanagement.student_management.repository.StuRepo.AcademyRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 学生服务实现类
+ * 提供学生相关的业务逻辑操作，实现IStudentService接口
+ * 
+ * <p>主要功能：</p>
+ * <ul>
+ *   <li>学生CRUD操作 - 创建、查询、更新、删除学生</li>
+ *   <li>智能数据关联 - 自动创建班级、专业、学院等关联数据</li>
+ *   <li>批量导入功能 - 支持CSV文件批量导入学生</li>
+ *   <li>分页查询服务 - 支持分页和排序</li>
+ *   <li>搜索功能 - 支持按姓名模糊搜索</li>
+ *   <li>事务管理 - 使用@Transactional确保数据一致性</li>
+ * </ul>
+ * 
+ * @author JamesLiu
+ * @version 1.0
+ * @since 2025-09-10
+ */
 @Service
 public class StudentService implements IStudentService {
 
@@ -27,15 +46,18 @@ public class StudentService implements IStudentService {
     private final SubClassRepository subClassRepository;
     private final TotalClassRepository totalClassRepository;
     private final MajorRepository majorRepository;
+    private final AcademyRepository academyRepository;
 
     public StudentService(StudentRepository studentRepository,
                          SubClassRepository subClassRepository,
                          TotalClassRepository totalClassRepository,
-                         MajorRepository majorRepository) {
+                         MajorRepository majorRepository,
+                         AcademyRepository academyRepository) {
         this.studentRepository = studentRepository;
         this.subClassRepository = subClassRepository;
         this.totalClassRepository = totalClassRepository;
         this.majorRepository = majorRepository;
+        this.academyRepository = academyRepository;
     }
 
     @Override
@@ -105,7 +127,7 @@ public class StudentService implements IStudentService {
         Major major = new Major();
         major.setMajorName(majorName);
         major.setGrade(grade);
-        major.setAcademy("默认学院");
+        major.setAcademy(ensureAcademyExists("默认学院"));
         return majorRepository.save(major);
     }
     
@@ -226,5 +248,27 @@ public class StudentService implements IStudentService {
         } catch (Exception e) {
             throw new RuntimeException("批量导入失败: " + e.getMessage());
         }
+    }
+    
+    /**
+     * 确保学院存在
+     */
+    private Academy ensureAcademyExists(String academyName) {
+        if (academyName == null) {
+            academyName = "默认学院";
+        }
+        
+        // 查找现有学院
+        Optional<Academy> existingAcademy = academyRepository.findByAcademyName(academyName);
+        if (existingAcademy.isPresent()) {
+            return existingAcademy.get();
+        }
+        
+        // 创建新学院
+        Academy academy = new Academy();
+        academy.setAcademyName(academyName);
+        academy.setAcademyCode("DEFAULT");
+        academy.setDescription("默认学院");
+        return academyRepository.save(academy);
     }
 }

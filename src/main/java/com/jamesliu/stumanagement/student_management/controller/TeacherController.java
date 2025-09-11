@@ -2,7 +2,7 @@ package com.jamesliu.stumanagement.student_management.controller;
 
 import com.jamesliu.stumanagement.student_management.Entity.ResponseMessage;
 import com.jamesliu.stumanagement.student_management.Entity.Teacher.Teacher;
-import com.jamesliu.stumanagement.student_management.repository.TeacherRepo.TeacherRepository;
+import com.jamesliu.stumanagement.student_management.Service.TeacherService.ITeacherService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,22 +17,21 @@ import java.util.Optional;
 @RequestMapping("/teachers")
 public class TeacherController {
 
-    private final TeacherRepository teacherRepository;
+    private final ITeacherService teacherService;
 
-    public TeacherController(TeacherRepository teacherRepository) {
-        this.teacherRepository = teacherRepository;
+    public TeacherController(ITeacherService teacherService) {
+        this.teacherService = teacherService;
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseMessage<Teacher> addTeacher(@RequestBody Teacher teacher) {
-        // 检查教师编号是否已存在
-        if (teacherRepository.findByTeacherNo(teacher.getTeacherNo()).isPresent()) {
-            return ResponseMessage.error("教师编号已存在");
+        try {
+            Teacher savedTeacher = teacherService.saveTeacher(teacher);
+            return ResponseMessage.success(savedTeacher);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
         }
-        
-        Teacher savedTeacher = teacherRepository.save(teacher);
-        return ResponseMessage.success(savedTeacher);
     }
 
     @PutMapping("/{id}")
@@ -40,32 +39,27 @@ public class TeacherController {
     public ResponseMessage<Teacher> updateTeacher(
             @PathVariable Integer id, 
             @RequestBody Teacher teacher) {
-        return teacherRepository.findById(id)
-                .map(existingTeacher -> {
-                    existingTeacher.setTeacherName(teacher.getTeacherName());
-                    existingTeacher.setTeacherNo(teacher.getTeacherNo());
-                    existingTeacher.setDepartment(teacher.getDepartment());
-                    existingTeacher.setTitle(teacher.getTitle());
-                    return teacherRepository.save(existingTeacher);
-                })
-                .map(ResponseMessage::success)
-                .orElse(ResponseMessage.error("教师不存在"));
+        try {
+            Teacher updatedTeacher = teacherService.updateTeacher(id, 
+                teacher.getTeacherNo(), teacher.getTeacherName(), 
+                teacher.getDepartment(), teacher.getTitle());
+            return ResponseMessage.success(updatedTeacher);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseMessage<String> deleteTeacher(@PathVariable Integer id) {
-        if (teacherRepository.existsById(id)) {
-            teacherRepository.deleteById(id);
-            return ResponseMessage.success("教师删除成功");
-        }
-        return ResponseMessage.error("教师不存在");
+        teacherService.deleteById(id);
+        return ResponseMessage.success("教师删除成功");
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<Teacher> getTeacherById(@PathVariable Integer id) {
-        Optional<Teacher> teacher = teacherRepository.findById(id);
+        Optional<Teacher> teacher = teacherService.findById(id);
         return teacher.map(ResponseMessage::success)
                 .orElse(ResponseMessage.error("教师不存在"));
     }
@@ -73,7 +67,7 @@ public class TeacherController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<List<Teacher>> getAllTeachers() {
-        List<Teacher> teachers = teacherRepository.findAll();
+        List<Teacher> teachers = teacherService.findAll();
         return ResponseMessage.success(teachers);
     }
 
@@ -89,7 +83,7 @@ public class TeacherController {
                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Teacher> teachers = teacherRepository.findAll(pageable);
+        Page<Teacher> teachers = teacherService.findAll(pageable);
         return ResponseMessage.success(teachers);
     }
 
@@ -97,7 +91,7 @@ public class TeacherController {
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<List<Teacher>> searchTeachersByName(
             @RequestParam String name) {
-        List<Teacher> teachers = teacherRepository.findByTeacherNameContaining(name);
+        List<Teacher> teachers = teacherService.searchTeachers(name);
         return ResponseMessage.success(teachers);
     }
 
@@ -105,7 +99,7 @@ public class TeacherController {
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<List<Teacher>> getTeachersByDepartment(
             @PathVariable String department) {
-        List<Teacher> teachers = teacherRepository.findByDepartment(department);
+        List<Teacher> teachers = teacherService.findByDepartment(department);
         return ResponseMessage.success(teachers);
     }
 }

@@ -3,7 +3,7 @@ package com.jamesliu.stumanagement.student_management.controller;
 import com.jamesliu.stumanagement.student_management.Entity.Finance.Payment;
 import com.jamesliu.stumanagement.student_management.Entity.ResponseMessage;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Student;
-import com.jamesliu.stumanagement.student_management.repository.StuRepo.PaymentRepository;
+import com.jamesliu.stumanagement.student_management.Service.PaymentService.IPaymentService;
 import com.jamesliu.stumanagement.student_management.repository.StuRepo.StudentRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,38 +20,24 @@ import java.util.Optional;
 @RequestMapping("/payments")
 public class PaymentController {
 
-    private final PaymentRepository paymentRepository;
+    private final IPaymentService paymentService;
     private final StudentRepository studentRepository;
 
-    public PaymentController(PaymentRepository paymentRepository, 
+    public PaymentController(IPaymentService paymentService, 
                            StudentRepository studentRepository) {
-        this.paymentRepository = paymentRepository;
+        this.paymentService = paymentService;
         this.studentRepository = studentRepository;
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseMessage<Payment> addPayment(@RequestBody Payment payment) {
-        // 智能验证学生是否存在
-        if (payment.getStudent() == null || payment.getStudent().getStuId() == null) {
-            return ResponseMessage.error("学生ID不能为空");
+        try {
+            Payment savedPayment = paymentService.savePayment(payment);
+            return ResponseMessage.success(savedPayment);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
         }
-        
-        Optional<Student> student = studentRepository.findById(payment.getStudent().getStuId());
-        if (!student.isPresent()) {
-            return ResponseMessage.error("学生不存在");
-        }
-        
-        // 设置学生信息
-        payment.setStudent(student.get());
-        
-        // 设置默认值
-        if (payment.getPaymentDate() == null) {
-            payment.setPaymentDate(LocalDate.now());
-        }
-        
-        Payment savedPayment = paymentRepository.save(payment);
-        return ResponseMessage.success(savedPayment);
     }
 
     @PutMapping("/{id}")
@@ -59,16 +45,14 @@ public class PaymentController {
     public ResponseMessage<Payment> updatePayment(
             @PathVariable Integer id, 
             @RequestBody Payment payment) {
-        return paymentRepository.findById(id)
-                .map(existingPayment -> {
-                    existingPayment.setPaymentItem(payment.getPaymentItem());
-                    existingPayment.setAmount(payment.getAmount());
-                    existingPayment.setPaymentDate(payment.getPaymentDate());
-                    existingPayment.setCompleted(payment.isCompleted());
-                    return paymentRepository.save(existingPayment);
-                })
-                .map(ResponseMessage::success)
-                .orElse(ResponseMessage.error("缴费记录不存在"));
+        try {
+            Payment updatedPayment = paymentService.updatePayment(id,
+                payment.getPaymentType(), payment.getAmount(), 
+                payment.getPaymentStatus(), payment.getDescription());
+            return ResponseMessage.success(updatedPayment);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
+        }
     }
 
     @PatchMapping("/{id}/status")
@@ -76,32 +60,26 @@ public class PaymentController {
     public ResponseMessage<Payment> updatePaymentStatus(
             @PathVariable Integer id,
             @RequestBody PaymentStatusUpdateRequest request) {
-        return paymentRepository.findById(id)
-                .map(payment -> {
-                    payment.setCompleted(request.isCompleted());
-                    if (request.isCompleted() && payment.getPaymentDate() == null) {
-                        payment.setPaymentDate(LocalDate.now());
-                    }
-                    return paymentRepository.save(payment);
-                })
-                .map(ResponseMessage::success)
-                .orElse(ResponseMessage.error("缴费记录不存在"));
+        try {
+            String status = request.isCompleted() ? "已缴费" : "未缴费";
+            Payment updatedPayment = paymentService.updatePaymentStatus(id, status);
+            return ResponseMessage.success(updatedPayment);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseMessage<String> deletePayment(@PathVariable Integer id) {
-        if (paymentRepository.existsById(id)) {
-            paymentRepository.deleteById(id);
-            return ResponseMessage.success("缴费记录删除成功");
-        }
-        return ResponseMessage.error("缴费记录不存在");
+        paymentService.deleteById(id);
+        return ResponseMessage.success("缴费记录删除成功");
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<Payment> getPaymentById(@PathVariable Integer id) {
-        Optional<Payment> payment = paymentRepository.findById(id);
+        Optional<Payment> payment = paymentService.findById(id);
         return payment.map(ResponseMessage::success)
                 .orElse(ResponseMessage.error("缴费记录不存在"));
     }
@@ -109,7 +87,7 @@ public class PaymentController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<List<Payment>> getAllPayments() {
-        List<Payment> payments = paymentRepository.findAll();
+        List<Payment> payments = paymentService.findAll();
         return ResponseMessage.success(payments);
     }
 
@@ -125,21 +103,21 @@ public class PaymentController {
                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Payment> payments = paymentRepository.findAll(pageable);
+        Page<Payment> payments = paymentService.findAll(pageable);
         return ResponseMessage.success(payments);
     }
 
     @GetMapping("/student/{studentId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<List<Payment>> getPaymentsByStudent(@PathVariable Integer studentId) {
-        List<Payment> payments = paymentRepository.findByStudentStuId(studentId);
+        List<Payment> payments = paymentService.findByStudentId(studentId);
         return ResponseMessage.success(payments);
     }
 
-    @GetMapping("/status/{completed}")
+    @GetMapping("/status/{status}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Payment>> getPaymentsByStatus(@PathVariable boolean completed) {
-        List<Payment> payments = paymentRepository.findByIsCompleted(completed);
+    public ResponseMessage<List<Payment>> getPaymentsByStatus(@PathVariable String status) {
+        List<Payment> payments = paymentService.findByPaymentStatus(status);
         return ResponseMessage.success(payments);
     }
 

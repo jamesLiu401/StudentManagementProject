@@ -44,8 +44,8 @@ public class Payment {
     @JoinColumn(name = "stu_id")
     private Student student;
 
-    @Column(name = "payment_item", nullable = false)
-    private String paymentItem;
+    @Column(name = "payment_type", nullable = false)
+    private String paymentType;
 
     @Column(name = "amount", nullable = false)
     private Double amount;
@@ -53,8 +53,11 @@ public class Payment {
     @Column(name = "payment_date")
     private LocalDate paymentDate;
 
-    @Column(name = "is_completed", nullable = false)
-    private boolean isCompleted;
+    @Column(name = "payment_status", nullable = false)
+    private String paymentStatus;
+    
+    @Column(name = "description")
+    private String description;
 
     // Getters and Setters
     public Integer getPaymentId() {
@@ -73,12 +76,12 @@ public class Payment {
         this.student = student;
     }
 
-    public String getPaymentItem() {
-        return paymentItem;
+    public String getPaymentType() {
+        return paymentType;
     }
 
-    public void setPaymentItem(String paymentItem) {
-        this.paymentItem = paymentItem;
+    public void setPaymentType(String paymentType) {
+        this.paymentType = paymentType;
     }
 
     public Double getAmount() {
@@ -97,12 +100,20 @@ public class Payment {
         this.paymentDate = paymentDate;
     }
 
-    public boolean isCompleted() {
-        return isCompleted;
+    public String getPaymentStatus() {
+        return paymentStatus;
     }
 
-    public void setCompleted(boolean completed) {
-        isCompleted = completed;
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+    
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     @Override
@@ -110,10 +121,11 @@ public class Payment {
         return "Payment{" +
                 "paymentId=" + paymentId +
                 ", student=" + student +
-                ", paymentItem='" + paymentItem + '\'' +
+                ", paymentType='" + paymentType + '\'' +
                 ", amount=" + amount +
                 ", paymentDate=" + paymentDate +
-                ", isCompleted=" + isCompleted +
+                ", paymentStatus='" + paymentStatus + '\'' +
+                ", description='" + description + '\'' +
                 '}';
     }
 }

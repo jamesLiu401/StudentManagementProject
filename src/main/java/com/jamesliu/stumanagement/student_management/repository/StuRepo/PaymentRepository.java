@@ -50,13 +50,17 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     @NonNull
     List<Payment> findByStudentStuId(@NonNull Integer studentId);
     
+    // 根据学生ID查询缴费记录（简化方法名）
+    @NonNull
+    List<Payment> findByStudentId(@NonNull Integer studentId);
+    
     // 根据缴费状态查询
     @NonNull
-    List<Payment> findByIsCompleted(boolean isCompleted);
+    List<Payment> findByPaymentStatus(@NonNull String paymentStatus);
     
     // 根据学生ID和缴费状态查询
     @NonNull
-    List<Payment> findByStudentStuIdAndIsCompleted(@NonNull Integer studentId, boolean isCompleted);
+    List<Payment> findByStudentStuIdAndPaymentStatus(@NonNull Integer studentId, @NonNull String paymentStatus);
     
     // 根据学生对象查询缴费记录
     @NonNull
@@ -64,19 +68,27 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     
     // 根据学生对象和缴费状态查询
     @NonNull
-    List<Payment> findByStudentAndIsCompleted(@NonNull Student student, boolean isCompleted);
+    List<Payment> findByStudentAndPaymentStatus(@NonNull Student student, @NonNull String paymentStatus);
     
-    // 根据缴费项目查询
+    // 根据学生对象和缴费类型查询
     @NonNull
-    List<Payment> findByPaymentItem(@NonNull String paymentItem);
+    List<Payment> findByStudentAndPaymentType(@NonNull Student student, @NonNull String paymentType);
     
-    // 根据缴费项目模糊查询
+    // 根据缴费类型和缴费状态查询
     @NonNull
-    List<Payment> findByPaymentItemContaining(@NonNull String paymentItem);
+    List<Payment> findByPaymentTypeAndPaymentStatus(@NonNull String paymentType, @NonNull String paymentStatus);
     
-    // 根据缴费项目和学生ID查询
+    // 根据缴费类型查询
     @NonNull
-    List<Payment> findByPaymentItemAndStudentStuId(@NonNull String paymentItem, @NonNull Integer studentId);
+    List<Payment> findByPaymentType(@NonNull String paymentType);
+    
+    // 根据缴费类型模糊查询
+    @NonNull
+    List<Payment> findByPaymentTypeContaining(@NonNull String paymentType);
+    
+    // 根据缴费类型和学生ID查询
+    @NonNull
+    List<Payment> findByPaymentTypeAndStudentStuId(@NonNull String paymentType, @NonNull Integer studentId);
     
     // 根据金额范围查询
     @NonNull
@@ -94,13 +106,21 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     @NonNull
     List<Payment> findByStudentStuIdAndPaymentDateBetween(@NonNull Integer studentId, @NonNull LocalDate startDate, @NonNull LocalDate endDate);
     
-    // 根据学生ID和缴费项目查询
+    // 根据学生对象和缴费日期范围查询
     @NonNull
-    List<Payment> findByStudentStuIdAndPaymentItem(@NonNull Integer studentId, @NonNull String paymentItem);
+    List<Payment> findByStudentAndPaymentDateBetween(@NonNull Student student, @NonNull LocalDate startDate, @NonNull LocalDate endDate);
     
-    // 根据学生ID、缴费状态和缴费项目查询
+    // 根据学生对象和金额范围查询
     @NonNull
-    List<Payment> findByStudentStuIdAndIsCompletedAndPaymentItem(@NonNull Integer studentId, boolean isCompleted, @NonNull String paymentItem);
+    List<Payment> findByStudentAndAmountBetween(@NonNull Student student, @NonNull Double minAmount, @NonNull Double maxAmount);
+    
+    // 根据学生ID和缴费类型查询
+    @NonNull
+    List<Payment> findByStudentStuIdAndPaymentType(@NonNull Integer studentId, @NonNull String paymentType);
+    
+    // 根据学生ID、缴费状态和缴费类型查询
+    @NonNull
+    List<Payment> findByStudentStuIdAndPaymentStatusAndPaymentType(@NonNull Integer studentId, @NonNull String paymentStatus, @NonNull String paymentType);
     
     // 分页查询所有缴费记录
     @NonNull
@@ -108,7 +128,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     
     // 根据缴费状态分页查询
     @NonNull
-    Page<Payment> findByIsCompleted(boolean isCompleted, @NonNull Pageable pageable);
+    Page<Payment> findByPaymentStatus(@NonNull String paymentStatus, @NonNull Pageable pageable);
     
     // 根据学生ID分页查询
     @NonNull
@@ -116,29 +136,63 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     
     // 根据学生ID和缴费状态分页查询
     @NonNull
-    Page<Payment> findByStudentStuIdAndIsCompleted(@NonNull Integer studentId, boolean isCompleted, @NonNull Pageable pageable);
+    Page<Payment> findByStudentStuIdAndPaymentStatus(@NonNull Integer studentId, @NonNull String paymentStatus, @NonNull Pageable pageable);
     
-    // 统计学生未完成缴费数量
-    long countByStudentStuIdAndIsCompleted(@NonNull Integer studentId, boolean isCompleted);
+    // 根据学生对象分页查询
+    @NonNull
+    Page<Payment> findByStudent(@NonNull Student student, @NonNull Pageable pageable);
+    
+    // 根据缴费类型分页查询
+    @NonNull
+    Page<Payment> findByPaymentType(@NonNull String paymentType, @NonNull Pageable pageable);
+    
+    // 统计学生指定缴费状态的数量
+    long countByStudentStuIdAndPaymentStatus(@NonNull Integer studentId, @NonNull String paymentStatus);
     
     // 统计学生总缴费数量
     long countByStudentStuId(@NonNull Integer studentId);
     
-    // 统计指定缴费项目的数量
-    long countByPaymentItem(@NonNull String paymentItem);
+    // 统计指定缴费类型的数量
+    long countByPaymentType(@NonNull String paymentType);
     
     // 统计指定缴费状态的数量
-    long countByIsCompleted(boolean isCompleted);
+    long countByPaymentStatus(@NonNull String paymentStatus);
+    
+    // 统计学生缴费数量（按学生对象）
+    long countByStudent(@NonNull Student student);
+    
+    // 统计学生指定缴费状态的数量（按学生对象）
+    long countByStudentAndPaymentStatus(@NonNull Student student, @NonNull String paymentStatus);
     
     // 计算学生总缴费金额
-    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.student.stuId = :studentId AND p.isCompleted = true")
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.student.stuId = :studentId AND p.paymentStatus = '已缴费'")
     @NonNull
-    Double sumAmountByStudentStuIdAndIsCompleted(@Param("studentId") @NonNull Integer studentId);
+    Double sumAmountByStudentStuIdAndPaymentStatus(@Param("studentId") @NonNull Integer studentId);
     
-    // 计算学生指定缴费项目的总金额
-    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.student.stuId = :studentId AND p.paymentItem = :paymentItem AND p.isCompleted = true")
+    // 计算学生指定缴费类型的总金额
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.student.stuId = :studentId AND p.paymentType = :paymentType AND p.paymentStatus = '已缴费'")
     @NonNull
-    Double sumAmountByStudentStuIdAndPaymentItemAndIsCompleted(@Param("studentId") @NonNull Integer studentId, @Param("paymentItem") @NonNull String paymentItem);
+    Double sumAmountByStudentStuIdAndPaymentTypeAndPaymentStatus(@Param("studentId") @NonNull Integer studentId, @Param("paymentType") @NonNull String paymentType);
+    
+    // 计算学生总缴费金额（按学生对象）
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.student = :student AND p.paymentStatus = '已缴费'")
+    @NonNull
+    Double sumAmountByStudent(@Param("student") @NonNull Student student);
+    
+    // 计算指定缴费类型的总金额
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.paymentType = :paymentType AND p.paymentStatus = '已缴费'")
+    @NonNull
+    Double sumAmountByPaymentType(@Param("paymentType") @NonNull String paymentType);
+    
+    // 计算指定缴费状态的总金额
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.paymentStatus = :paymentStatus")
+    @NonNull
+    Double sumAmountByPaymentStatus(@Param("paymentStatus") @NonNull String paymentStatus);
+    
+    // 计算学生指定缴费类型的总金额（按学生对象）
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.student = :student AND p.paymentType = :paymentType AND p.paymentStatus = '已缴费'")
+    @NonNull
+    Double sumAmountByStudentAndPaymentType(@Param("student") @NonNull Student student, @Param("paymentType") @NonNull String paymentType);
     
     // 查询学生最新的缴费记录
     @Query("SELECT p FROM Payment p WHERE p.student.stuId = :studentId ORDER BY p.paymentDate DESC")
@@ -151,12 +205,17 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     List<Payment> findPaymentsByDateRange(@Param("startDate") @NonNull LocalDate startDate, @Param("endDate") @NonNull LocalDate endDate);
     
     // 查询未完成缴费的学生ID列表
-    @Query("SELECT DISTINCT p.student.stuId FROM Payment p WHERE p.isCompleted = false")
+    @Query("SELECT DISTINCT p.student.stuId FROM Payment p WHERE p.paymentStatus = '未缴费'")
     @NonNull
     List<Integer> findStudentIdsWithIncompletePayments();
     
-    // 查询指定缴费项目的未完成记录
-    @Query("SELECT p FROM Payment p WHERE p.paymentItem = :paymentItem AND p.isCompleted = false")
+    // 查询指定缴费类型的未完成记录
+    @Query("SELECT p FROM Payment p WHERE p.paymentType = :paymentType AND p.paymentStatus = '未缴费'")
     @NonNull
-    List<Payment> findIncompletePaymentsByItem(@Param("paymentItem") @NonNull String paymentItem);
+    List<Payment> findIncompletePaymentsByType(@Param("paymentType") @NonNull String paymentType);
+    
+    // 计算学生总缴费金额（按学生ID）
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.student.stuId = :studentId AND p.paymentStatus = '已缴费'")
+    @NonNull
+    Double sumAmountByStudentId(@Param("studentId") @NonNull Integer studentId);
 }

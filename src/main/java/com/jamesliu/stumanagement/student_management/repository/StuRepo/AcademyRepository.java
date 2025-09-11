@@ -55,4 +55,20 @@ public interface AcademyRepository extends JpaRepository<Academy, Integer> {
     // 根据院长姓名模糊查询
     @NonNull
     List<Academy> findByDeanNameContaining(@NonNull String deanName);
+    
+    // 根据学院名称模糊查询和院长姓名查询
+    @NonNull
+    List<Academy> findByAcademyNameContainingAndDeanName(@NonNull String academyName, @NonNull String deanName);
+    
+    // 根据学院名称模糊分页查询
+    @NonNull
+    Page<Academy> findByAcademyNameContaining(@NonNull String academyName, @NonNull Pageable pageable);
+    
+    // 根据院长姓名分页查询
+    @NonNull
+    Page<Academy> findByDeanName(@NonNull String deanName, @NonNull Pageable pageable);
+    
+    // 统计方法
+    long countByAcademyNameContaining(@NonNull String name);
+    long countByDeanName(@NonNull String deanName);
 }
