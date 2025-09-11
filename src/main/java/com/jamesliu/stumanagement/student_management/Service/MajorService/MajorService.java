@@ -149,7 +149,7 @@ public class MajorService implements IMajorService {
     @Override
     @Transactional(readOnly = true)
     public Page<Major> findByMajorNameContaining(String name, Pageable pageable) {
-        return majorRepository.findByMajorNameContaining(name, pageable);
+        return majorRepository.findByMajorNameContainingAndPageable(name, pageable);
     }
     
     // 统计操作

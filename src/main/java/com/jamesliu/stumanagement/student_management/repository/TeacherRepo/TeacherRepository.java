@@ -44,7 +44,7 @@ public interface TeacherRepository extends JpaRepository<Teacher, Integer> {
     
     // 根据教师姓名模糊分页查询
     @NonNull
-    Page<Teacher> findByTeacherNameContaining(@NonNull String teacherName, @NonNull Pageable pageable);
+    Page<Teacher> findByTeacherNameContainingAndPageable(@NonNull String teacherName, @NonNull Pageable pageable);
     
     // 统计方法
     long countByDepartment(@NonNull String department);

@@ -54,7 +54,7 @@ public interface MajorRepository extends JpaRepository<Major, Integer> {
     
     // 根据专业名称模糊分页查询
     @NonNull
-    Page<Major> findByMajorNameContaining(@NonNull String name, @NonNull Pageable pageable);
+    Page<Major> findByMajorNameContainingAndPageable(@NonNull String name, @NonNull Pageable pageable);
     
     // 统计方法
     long countByCounselor(@NonNull Teacher counselor);

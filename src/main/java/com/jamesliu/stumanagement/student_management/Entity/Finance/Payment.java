@@ -2,6 +2,8 @@ package com.jamesliu.stumanagement.student_management.Entity.Finance;
 
 import com.jamesliu.stumanagement.student_management.Entity.Student.Student;
 import jakarta.persistence.*;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -84,8 +86,8 @@ public class Payment {
         this.paymentType = paymentType;
     }
 
-    public Double getAmount() {
-        return amount;
+    public BigDecimal getAmount() {
+        return BigDecimal.valueOf(amount);
     }
 
     public void setAmount(Double amount) {
