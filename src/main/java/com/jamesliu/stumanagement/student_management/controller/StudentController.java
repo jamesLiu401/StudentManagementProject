@@ -14,6 +14,25 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * 学生管理控制器
+ * 提供学生信息的增删改查功能，支持批量导入和智能数据关联
+ * 
+ * 主要功能：
+ * 1. 学生信息管理 - 增删改查操作
+ * 2. 分页查询 - 支持排序和筛选
+ * 3. 批量导入 - CSV文件批量导入学生
+ * 4. 智能关联 - 自动创建班级、专业等关联数据
+ * 
+ * 权限控制：
+ * - 增删改操作：仅ADMIN
+ * - 查询操作：ADMIN和TEACHER
+ * - 批量导入：仅ADMIN
+ * 
+ * @author JamesLiu
+ * @version 1.0
+ * @since 2024-01-01
+ */
 @RestController
 @RequestMapping("/students")
 public class StudentController {
@@ -24,6 +43,18 @@ public class StudentController {
         this.studentService = studentService;
     }
 
+    /**
+     * 添加学生信息
+     * 支持智能创建关联的班级、专业数据
+     * 
+     * 智能特性：
+     * - 如果班级不存在，自动创建Major→TotalClass→SubClass
+     * - 根据专业和年级自动生成班级名称
+     * - 设置默认学院和部门信息
+     * 
+     * @param student 学生信息对象
+     * @return 保存成功的学生信息
+     */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseMessage<Student> addStudent(@RequestBody Student student) {
@@ -85,6 +116,22 @@ public class StudentController {
         return ResponseMessage.success(students);
     }
 
+    /**
+     * 批量导入学生信息
+     * 通过CSV文件批量导入学生数据
+     * 
+     * CSV文件格式要求：
+     * 姓名,性别,专业,年级,电话,地址,班级ID
+     * 张三,true,计算机科学,2023,13800138000,北京市海淀区,1
+     * 
+     * 注意事项：
+     * - 仅支持CSV格式文件
+     * - 文件不能为空
+     * - 支持智能创建关联数据
+     * 
+     * @param file CSV文件
+     * @return 导入结果和学生列表
+     */
     @PostMapping("/batch/import")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseMessage<List<Student>> batchImportFromCsv(

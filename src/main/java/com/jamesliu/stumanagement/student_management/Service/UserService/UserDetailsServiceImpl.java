@@ -29,7 +29,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         // 创建用户权限列表
         List<GrantedAuthority> authorities = new ArrayList<>();
         if (user.getRole() != null) {
-            authorities.add(new SimpleGrantedAuthority(user.getRole()));
+            // 确保角色格式正确（ROLE_前缀）
+            String role = user.getRole();
+            if (!role.startsWith("ROLE_")) {
+                role = "ROLE_" + role;
+            }
+            authorities.add(new SimpleGrantedAuthority(role));
         }
         
         return new org.springframework.security.core.userdetails.User(

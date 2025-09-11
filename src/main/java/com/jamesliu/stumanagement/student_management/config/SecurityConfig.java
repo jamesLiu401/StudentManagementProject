@@ -14,9 +14,42 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * Spring Security 安全配置类
+ * 配置系统的安全策略，包括认证、授权、JWT处理等
+ * 
+ * <p>主要功能：</p>
+ * <ul>
+ *   <li>JWT认证配置 - 配置JWT Token的验证和处理</li>
+ *   <li>路径权限配置 - 配置不同路径的访问权限</li>
+ *   <li>角色权限控制 - 基于角色的访问控制(RBAC)</li>
+ *   <li>方法级权限 - 启用方法级权限控制</li>
+ *   <li>密码编码器 - 配置密码加密方式</li>
+ * </ul>
+ * 
+ * <p>权限配置：</p>
+ * <ul>
+ *   <li>公开路径 - /auth/login</li>
+ *   <li>管理员路径 - /admin/**, /cascade/**</li>
+ *   <li>教师路径 - /teacher/**, /students/**, /teachers/**, /payments/**</li>
+ *   <li>通用路径 - /academies/**, /majors/**, /classes/**, /subjects/**</li>
+ * </ul>
+ * 
+ * <p>安全特性：</p>
+ * <ul>
+ *   <li>CSRF保护 - 禁用CSRF（API服务）</li>
+ *   <li>表单登录 - 禁用表单登录（使用JWT）</li>
+ *   <li>HTTP Basic - 禁用HTTP Basic认证</li>
+ *   <li>JWT过滤器 - 自定义JWT认证过滤器</li>
+ * </ul>
+ * 
+ * @author JamesLiu
+ * @version 1.0
+ * @since 2025-08-16
+ */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity()
 public class SecurityConfig {
 
     @Autowired
@@ -27,10 +60,17 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/login", "/auth/register").permitAll()
+                .requestMatchers("/auth/login").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/teacher/**").hasAnyRole("ADMIN", "TEACHER")
                 .requestMatchers("/students/**").hasAnyRole("ADMIN", "TEACHER")
+                .requestMatchers("/teachers/**").hasAnyRole("ADMIN", "TEACHER")
+                .requestMatchers("/payments/**").hasAnyRole("ADMIN", "TEACHER")
+                .requestMatchers("/academies/**").hasAnyRole("ADMIN", "TEACHER")
+                .requestMatchers("/majors/**").hasAnyRole("ADMIN", "TEACHER")
+                .requestMatchers("/classes/**").hasAnyRole("ADMIN", "TEACHER")
+                .requestMatchers("/cascade/**").hasRole("ADMIN")
+                .requestMatchers("/subjects/**").hasAnyRole("ADMIN", "TEACHER")
                 .anyRequest().authenticated()
             )
             .formLogin(AbstractHttpConfigurer::disable)

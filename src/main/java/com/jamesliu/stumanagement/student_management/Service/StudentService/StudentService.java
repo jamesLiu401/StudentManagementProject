@@ -1,11 +1,15 @@
 package com.jamesliu.stumanagement.student_management.Service.StudentService;
 
 import com.jamesliu.stumanagement.student_management.Entity.ResponseMessage;
-import com.jamesliu.stumanagement.student_management.Entity.Student.Student;
+import com.jamesliu.stumanagement.student_management.Entity.Student.*;
 import com.jamesliu.stumanagement.student_management.repository.StuRepo.StudentRepository;
+import com.jamesliu.stumanagement.student_management.repository.StuRepo.SubClassRepository;
+import com.jamesliu.stumanagement.student_management.repository.StuRepo.TotalClassRepository;
+import com.jamesliu.stumanagement.student_management.repository.StuRepo.MajorRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -20,14 +24,125 @@ import java.util.Optional;
 public class StudentService implements IStudentService {
 
     private final StudentRepository studentRepository;
+    private final SubClassRepository subClassRepository;
+    private final TotalClassRepository totalClassRepository;
+    private final MajorRepository majorRepository;
 
-    public StudentService(StudentRepository studentRepository) {
+    public StudentService(StudentRepository studentRepository,
+                         SubClassRepository subClassRepository,
+                         TotalClassRepository totalClassRepository,
+                         MajorRepository majorRepository) {
         this.studentRepository = studentRepository;
+        this.subClassRepository = subClassRepository;
+        this.totalClassRepository = totalClassRepository;
+        this.majorRepository = majorRepository;
     }
 
     @Override
+    @Transactional
     public Student addStudent(Student student) {
+        // 智能创建关联数据
+        SubClass subClass = ensureClassExists(student);
+        student.setStuClass(subClass);
+        
         return studentRepository.save(student);
+    }
+    
+    /**
+     * 确保班级存在，如果不存在则自动创建
+     */
+    private SubClass ensureClassExists(Student student) {
+        // 如果学生已经指定了班级，直接返回
+        if (student.getStuClass() != null && student.getStuClass().getSubClassId() != null) {
+            return subClassRepository.findById(student.getStuClass().getSubClassId())
+                    .orElseThrow(() -> new RuntimeException("指定的班级不存在"));
+        }
+        
+        // 根据学生信息自动创建班级
+        String className = generateClassName(student);
+        String majorName = student.getStuMajor();
+        Integer grade = student.getGrade();
+        
+        // 1. 确保专业存在
+        Major major = ensureMajorExists(majorName, grade);
+        
+        // 2. 确保大班存在
+        TotalClass totalClass = ensureTotalClassExists(major, grade);
+        
+        // 3. 确保小班存在
+        return ensureSubClassExists(totalClass, className);
+    }
+    
+    /**
+     * 生成班级名称
+     */
+    private String generateClassName(Student student) {
+        String major = student.getStuMajor();
+        Integer grade = student.getGrade();
+        
+        // 生成班级名称，如：计科2301
+        if (major != null && grade != null) {
+            return major.substring(0, Math.min(2, major.length())) + grade.toString().substring(2) + "01";
+        }
+        return "默认班级";
+    }
+    
+    /**
+     * 确保专业存在
+     */
+    private Major ensureMajorExists(String majorName, Integer grade) {
+        if (majorName == null) {
+            majorName = "默认专业";
+        }
+        
+        // 查找现有专业
+        Optional<Major> existingMajor = majorRepository.findByMajorNameAndGrade(majorName, grade);
+        if (existingMajor.isPresent()) {
+            return existingMajor.get();
+        }
+        
+        // 创建新专业
+        Major major = new Major();
+        major.setMajorName(majorName);
+        major.setGrade(grade);
+        major.setAcademy("默认学院");
+        return majorRepository.save(major);
+    }
+    
+    /**
+     * 确保大班存在
+     */
+    private TotalClass ensureTotalClassExists(Major major, Integer grade) {
+        String totalClassName = major.getMajorName() + grade + "级";
+        
+        // 查找现有大班
+        Optional<TotalClass> existingTotalClass = totalClassRepository.findByTotalClassNameAndMajor(totalClassName, major);
+        if (existingTotalClass.isPresent()) {
+            return existingTotalClass.get();
+        }
+        
+        // 创建新大班
+        TotalClass totalClass = new TotalClass();
+        totalClass.setTotalClassName(totalClassName);
+        totalClass.setMajor(major);
+        return totalClassRepository.save(totalClass);
+    }
+    
+    /**
+     * 确保小班存在
+     */
+    private SubClass ensureSubClassExists(TotalClass totalClass, String className) {
+        // 查找现有小班
+        Optional<SubClass> existingSubClass = subClassRepository.findBySubClassNameAndTotalClass(className, totalClass);
+        if (existingSubClass.isPresent()) {
+            return existingSubClass.get();
+        }
+        
+        // 创建新小班
+        SubClass subClass = new SubClass();
+        subClass.setSubClassName(className);
+        subClass.setTotalClass(totalClass);
+        return subClassRepository.save(subClass);
     }
 
     @Override
