@@ -85,6 +85,7 @@ public class AuthController {
             
             Map<String, Object> responseData = new HashMap<>();
             responseData.put("token", token);
+            assert user != null;
             responseData.put("username", user.getUsername());
             responseData.put("role", user.getRole());
             responseData.put("userId", user.getUserId());

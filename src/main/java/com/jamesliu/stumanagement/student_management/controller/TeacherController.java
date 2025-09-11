@@ -102,4 +102,61 @@ public class TeacherController {
         List<Teacher> teachers = teacherService.findByDepartment(department);
         return ResponseMessage.success(teachers);
     }
+
+    @GetMapping("/title/{title}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<List<Teacher>> getTeachersByTitle(@PathVariable String title) {
+        List<Teacher> teachers = teacherService.findByTitle(title);
+        return ResponseMessage.success(teachers);
+    }
+
+    @GetMapping("/department/{department}/title/{title}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<List<Teacher>> getTeachersByDepartmentAndTitle(
+            @PathVariable String department,
+            @PathVariable String title) {
+        List<Teacher> teachers = teacherService.findByDepartmentAndTitle(department, title);
+        return ResponseMessage.success(teachers);
+    }
+
+    @GetMapping("/search/page")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Page<Teacher>> searchTeachersByNamePage(
+            @RequestParam String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "teacherId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? 
+                   Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Teacher> teachers = teacherService.findByTeacherNameContaining(name, pageable);
+        return ResponseMessage.success(teachers);
+    }
+
+    // 统计相关API
+    @GetMapping("/department/{department}/count")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Long> countTeachersByDepartment(@PathVariable String department) {
+        long count = teacherService.countByDepartment(department);
+        return ResponseMessage.success(count);
+    }
+
+    @GetMapping("/title/{title}/count")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Long> countTeachersByTitle(@PathVariable String title) {
+        long count = teacherService.countByTitle(title);
+        return ResponseMessage.success(count);
+    }
+
+    @GetMapping("/department/{department}/title/{title}/count")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Long> countTeachersByDepartmentAndTitle(
+            @PathVariable String department,
+            @PathVariable String title) {
+        long count = teacherService.countByDepartmentAndTitle(department, title);
+        return ResponseMessage.success(count);
+    }
 }

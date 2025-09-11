@@ -210,4 +210,53 @@ public class AcademyController {
         return academy.map(ResponseMessage::success)
                 .orElse(ResponseMessage.error("学院代码不存在"));
     }
+
+    @GetMapping("/search/name/page")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Page<Academy>> searchAcademiesByNamePage(
+            @RequestParam String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "academyId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? 
+                   Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Academy> academies = academyService.findByAcademyNameContaining(name, pageable);
+        return ResponseMessage.success(academies);
+    }
+
+    @GetMapping("/search/dean/page")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Page<Academy>> searchAcademiesByDeanPage(
+            @RequestParam String deanName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "academyId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? 
+                   Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Academy> academies = academyService.findByDeanName(deanName, pageable);
+        return ResponseMessage.success(academies);
+    }
+
+    // 统计相关API
+    @GetMapping("/search/name/count")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Long> countAcademiesByNameContaining(@RequestParam String name) {
+        long count = academyService.countByAcademyNameContaining(name);
+        return ResponseMessage.success(count);
+    }
+
+    @GetMapping("/search/dean/count")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Long> countAcademiesByDeanName(@RequestParam String deanName) {
+        long count = academyService.countByDeanName(deanName);
+        return ResponseMessage.success(count);
+    }
 }

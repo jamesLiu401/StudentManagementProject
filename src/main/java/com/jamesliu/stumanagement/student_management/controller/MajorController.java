@@ -191,4 +191,161 @@ public class MajorController {
         List<Major> majors = majorService.searchMajors(majorName);
         return ResponseMessage.success(majors);
     }
+
+    @GetMapping("/grade/{grade}/page")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Page<Major>> getMajorsByGradePage(
+            @PathVariable Integer grade,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "majorId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? 
+                   Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Major> majors = majorService.findByGrade(grade, pageable);
+        return ResponseMessage.success(majors);
+    }
+
+    @GetMapping("/academy/{academyId}/page")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Page<Major>> getMajorsByAcademyPage(
+            @PathVariable Integer academyId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "majorId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? 
+                   Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        try {
+            var academy = academyService.findById(academyId)
+                    .orElseThrow(() -> new IllegalArgumentException("学院不存在"));
+            Page<Major> majors = majorService.findByAcademy(academy, pageable);
+            return ResponseMessage.success(majors);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
+        }
+    }
+
+    @GetMapping("/counselor/{counselorId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<List<Major>> getMajorsByCounselor(@PathVariable Integer counselorId) {
+        try {
+            var counselor = teacherService.findById(counselorId)
+                    .orElseThrow(() -> new IllegalArgumentException("辅导员不存在"));
+            List<Major> majors = majorService.findByCounselor(counselor);
+            return ResponseMessage.success(majors);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
+        }
+    }
+
+    @GetMapping("/counselor/{counselorId}/page")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Page<Major>> getMajorsByCounselorPage(
+            @PathVariable Integer counselorId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "majorId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? 
+                   Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        try {
+            var counselor = teacherService.findById(counselorId)
+                    .orElseThrow(() -> new IllegalArgumentException("辅导员不存在"));
+            Page<Major> majors = majorService.findByCounselor(counselor, pageable);
+            return ResponseMessage.success(majors);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
+        }
+    }
+
+    @GetMapping("/academy/{academyId}/grade/{grade}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<List<Major>> getMajorsByAcademyAndGrade(
+            @PathVariable Integer academyId,
+            @PathVariable Integer grade) {
+        try {
+            var academy = academyService.findById(academyId)
+                    .orElseThrow(() -> new IllegalArgumentException("学院不存在"));
+            List<Major> majors = majorService.findByAcademyAndGrade(academy, grade);
+            return ResponseMessage.success(majors);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
+        }
+    }
+
+    @GetMapping("/name/{majorName}/page")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Page<Major>> getMajorsByNamePage(
+            @PathVariable String majorName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "majorId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? 
+                   Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Major> majors = majorService.findByMajorNameContaining(majorName, pageable);
+        return ResponseMessage.success(majors);
+    }
+
+    // 统计相关API
+    @GetMapping("/counselor/{counselorId}/count")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Long> countMajorsByCounselor(@PathVariable Integer counselorId) {
+        try {
+            var counselor = teacherService.findById(counselorId)
+                    .orElseThrow(() -> new IllegalArgumentException("辅导员不存在"));
+            long count = majorService.countByCounselor(counselor);
+            return ResponseMessage.success(count);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
+        }
+    }
+
+    @GetMapping("/academy/{academyId}/count")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Long> countMajorsByAcademy(@PathVariable Integer academyId) {
+        try {
+            var academy = academyService.findById(academyId)
+                    .orElseThrow(() -> new IllegalArgumentException("学院不存在"));
+            long count = majorService.countByAcademy(academy);
+            return ResponseMessage.success(count);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
+        }
+    }
+
+    @GetMapping("/grade/{grade}/count")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Long> countMajorsByGrade(@PathVariable Integer grade) {
+        long count = majorService.countByGrade(grade);
+        return ResponseMessage.success(count);
+    }
+
+    @GetMapping("/academy/{academyId}/grade/{grade}/count")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<Long> countMajorsByAcademyAndGrade(
+            @PathVariable Integer academyId,
+            @PathVariable Integer grade) {
+        try {
+            var academy = academyService.findById(academyId)
+                    .orElseThrow(() -> new IllegalArgumentException("学院不存在"));
+            long count = majorService.countByAcademyAndGrade(academy, grade);
+            return ResponseMessage.success(count);
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
+        }
+    }
 }
