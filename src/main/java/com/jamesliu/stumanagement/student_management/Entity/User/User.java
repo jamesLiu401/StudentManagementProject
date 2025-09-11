@@ -2,6 +2,28 @@ package com.jamesliu.stumanagement.student_management.Entity.User;
 
 import jakarta.persistence.*;
 
+/**
+ * 用户实体类
+ * 用于管理系统用户的基本信息，包括管理员和教师
+ * 
+ * <p>主要功能：</p>
+ * <ul>
+ *   <li>用户身份验证 - 存储用户名和密码</li>
+ *   <li>角色管理 - 区分管理员(ADMIN)和教师(TEACHER)角色</li>
+ *   <li>权限控制 - 基于角色的访问控制</li>
+ * </ul>
+ * 
+ * <p>数据库映射：</p>
+ * <ul>
+ *   <li>表名：table_user</li>
+ *   <li>主键：user_id (自增)</li>
+ *   <li>唯一约束：username</li>
+ * </ul>
+ * 
+ * @author JamesLiu
+ * @version 1.0
+ * @since 2025-07-01
+ */
 @Entity
 @Table(name="table_user")
 public class User {

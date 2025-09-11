@@ -2,6 +2,34 @@ package com.jamesliu.stumanagement.student_management.Entity;
 
 import org.springframework.http.HttpStatus;
 
+/**
+ * 统一响应消息实体类
+ * 用于封装API接口的响应数据，提供统一的响应格式
+ * 
+ * <p>主要功能：</p>
+ * <ul>
+ *   <li>统一响应格式 - 包含消息、状态码、数据</li>
+ *   <li>成功响应封装 - 提供便捷的成功响应方法</li>
+ *   <li>错误响应封装 - 提供便捷的错误响应方法</li>
+ *   <li>泛型支持 - 支持任意类型的数据封装</li>
+ * </ul>
+ * 
+ * <p>使用示例：</p>
+ * <pre>
+ * // 成功响应
+ * ResponseMessage.success("操作成功", data)
+ * ResponseMessage.success(data)
+ * 
+ * // 错误响应
+ * ResponseMessage.error("操作失败")
+ * ResponseMessage.error("操作失败", 500)
+ * </pre>
+ * 
+ * @param <T> 响应数据的类型
+ * @author JamesLiu
+ * @version 1.0
+ * @since 2025-07-07
+ */
 public class ResponseMessage<T> {
     private String message;
     private Integer status;

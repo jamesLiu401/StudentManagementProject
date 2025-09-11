@@ -23,8 +23,11 @@ import static com.jamesliu.stumanagement.student_management.utils.StripEnc.strip
 @EnableJpaRepositories(
         entityManagerFactoryRef = "StuEntityManagerFactory",
         transactionManagerRef = "StuTransactionManager",
-        basePackages = {"com.jamesliu.stumanagement.student_management.repository.StuRepo"}
-)
+        basePackages = {
+            "com.jamesliu.stumanagement.student_management.repository.StuRepo",
+            "com.jamesliu.stumanagement.student_management.repository.TeacherRepo"
+        }
+       )
 public class StuDatabaseConfig {
 
     @Value("${spring.datasource.stumanage.url}")

@@ -2,6 +2,35 @@ package com.jamesliu.stumanagement.student_management.Entity.Student;
 
 import jakarta.persistence.*;
 
+/**
+ * 学生实体类
+ * 管理学生的基本信息和学籍信息
+ * 
+ * <p>主要功能：</p>
+ * <ul>
+ *   <li>学生基本信息管理 - 姓名、学号、联系方式等</li>
+ *   <li>学籍信息管理 - 年级、专业、班级归属</li>
+ *   <li>关联关系管理 - 与班级、专业、缴费记录等关联</li>
+ * </ul>
+ * 
+ * <p>关联关系：</p>
+ * <ul>
+ *   <li>多对一：学生属于小班(SubClass)</li>
+ *   <li>多对一：学生属于专业(Major)</li>
+ *   <li>一对多：学生有多个缴费记录(Payment)</li>
+ * </ul>
+ * 
+ * <p>数据库映射：</p>
+ * <ul>
+ *   <li>表名：stu_table</li>
+ *   <li>主键：stu_id (自增)</li>
+ *   <li>外键：sub_class_id, major_id</li>
+ * </ul>
+ * 
+ * @author JamesLiu
+ * @version 1.0
+ * @since 2025-07-04
+ */
 @Entity
 @Table(name="stu_table")
 public class Student {
