@@ -96,7 +96,7 @@ public class SubjectController {
             @RequestBody Subject subject) {
         try {
             Subject updatedSubject = subjectService.updateSubject(id,
-                subject.getSubjectName(), subject.getAcademy(), subject.getCredit());
+                subject.getSubjectName(), subject.getSubjectAcademy(), subject.getCredit());
             return ResponseMessage.success(updatedSubject);
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
