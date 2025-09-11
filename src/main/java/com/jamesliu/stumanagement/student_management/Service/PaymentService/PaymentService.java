@@ -266,7 +266,7 @@ public class PaymentService implements IPaymentService {
     @Override
     @Transactional(readOnly = true)
     public List<Payment> findByAmountBetween(BigDecimal minAmount, BigDecimal maxAmount) {
-        return paymentRepository.findByAmountBetween(minAmount, maxAmount);
+        return paymentRepository.findByAmountBetween(minAmount.doubleValue(), maxAmount.doubleValue());
     }
     
     /**
@@ -281,7 +281,7 @@ public class PaymentService implements IPaymentService {
     @Override
     @Transactional(readOnly = true)
     public List<Payment> findByStudentAndAmountBetween(Student student, BigDecimal minAmount, BigDecimal maxAmount) {
-        return paymentRepository.findByStudentAndAmountBetween(student, minAmount, maxAmount);
+        return paymentRepository.findByStudentAndAmountBetween(student, minAmount.doubleValue(), maxAmount.doubleValue());
     }
     
     // 复合条件查询
