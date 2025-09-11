@@ -3,7 +3,6 @@ package com.jamesliu.stumanagement.student_management.repository.UserRepo;
 import com.jamesliu.stumanagement.student_management.Entity.User.User;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;

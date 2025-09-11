@@ -305,7 +305,7 @@ public class SubjectController {
             @RequestParam(required = false) Double minCredit,
             @RequestParam(required = false) Double maxCredit) {
         
-        Long count;
+        long count;
         if (academy != null && minCredit != null && maxCredit != null) {
             count = subjectService.countByAcademyAndCreditBetween(academy, minCredit, maxCredit);
         } else if (credit != null) {

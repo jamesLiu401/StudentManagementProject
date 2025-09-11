@@ -10,14 +10,14 @@ import org.springframework.web.bind.annotation.*;
 /**
  * 级联管理控制器
  * 提供表联动管理的API接口
- * 
+ * <p>
  * 主要功能：
  * 1. 级联删除 - 支持数据迁移和强制删除
  * 2. 批量创建 - 支持批量创建专业和班级结构
  * 3. 数据迁移 - 支持学生和班级的迁移
  * 4. 一致性检查 - 检查数据关联的完整性
  * 5. 层级结构查询 - 获取完整的层级结构
- * 
+ * <p>
  * 权限控制：
  * - 所有操作：仅ADMIN权限
  * 
@@ -43,42 +43,41 @@ public class CascadeController {
     @PostMapping("/delete")
     public ResponseMessage<String> cascadeDelete(@RequestBody CascadeOperationDTO.CascadeDeleteRequest request) {
         try {
-            switch (request.getOperationType().toUpperCase()) {
-                case "ACADEMY":
+            return switch (request.getOperationType().toUpperCase()) {
+                case "ACADEMY" -> {
                     cascadeManagementService.cascadeDeleteAcademy(
-                        request.getSourceId(), 
-                        request.getTargetId(), 
-                        request.isForceDelete()
+                            request.getSourceId(),
+                            request.getTargetId(),
+                            request.isForceDelete()
                     );
-                    return ResponseMessage.success("学院级联删除成功");
-                    
-                case "MAJOR":
+                    yield ResponseMessage.success("学院级联删除成功");
+                }
+                case "MAJOR" -> {
                     cascadeManagementService.cascadeDeleteMajor(
-                        request.getSourceId(), 
-                        request.getTargetId(),
-                        request.isForceDelete()
+                            request.getSourceId(),
+                            request.getTargetId(),
+                            request.isForceDelete()
                     );
-                    return ResponseMessage.success("专业级联删除成功");
-                    
-                case "TOTAL_CLASS":
+                    yield ResponseMessage.success("专业级联删除成功");
+                }
+                case "TOTAL_CLASS" -> {
                     cascadeManagementService.cascadeDeleteTotalClass(
-                        request.getSourceId(), 
-                        request.getTargetId(), 
-                        request.isForceDelete()
+                            request.getSourceId(),
+                            request.getTargetId(),
+                            request.isForceDelete()
                     );
-                    return ResponseMessage.success("大班级联删除成功");
-                    
-                case "SUB_CLASS":
+                    yield ResponseMessage.success("大班级联删除成功");
+                }
+                case "SUB_CLASS" -> {
                     cascadeManagementService.cascadeDeleteSubClass(
-                        request.getSourceId(), 
-                        request.getTargetId(), 
-                        request.isForceDelete()
+                            request.getSourceId(),
+                            request.getTargetId(),
+                            request.isForceDelete()
                     );
-                    return ResponseMessage.success("小班级联删除成功");
-                    
-                default:
-                    return ResponseMessage.error("不支持的操作类型");
-            }
+                    yield ResponseMessage.success("小班级联删除成功");
+                }
+                default -> ResponseMessage.error("不支持的操作类型");
+            };
         } catch (Exception e) {
             return ResponseMessage.error("级联删除失败: " + e.getMessage());
         }

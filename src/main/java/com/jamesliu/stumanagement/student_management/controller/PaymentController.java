@@ -2,7 +2,6 @@ package com.jamesliu.stumanagement.student_management.controller;
 
 import com.jamesliu.stumanagement.student_management.Entity.Finance.Payment;
 import com.jamesliu.stumanagement.student_management.Entity.ResponseMessage;
-import com.jamesliu.stumanagement.student_management.Entity.Student.Student;
 import com.jamesliu.stumanagement.student_management.Service.PaymentService.IPaymentService;
 import com.jamesliu.stumanagement.student_management.repository.StuRepo.StudentRepository;
 import org.springframework.data.domain.Page;
@@ -12,7 +11,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
