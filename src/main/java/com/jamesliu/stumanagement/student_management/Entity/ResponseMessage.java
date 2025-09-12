@@ -53,6 +53,14 @@ public class ResponseMessage<T> {
         return new ResponseMessage<>(message, HttpStatus.BAD_REQUEST.value(), null);
     }
     
+    public static<U> ResponseMessage<U> unauthorized(String message){
+        return new ResponseMessage<>(message, HttpStatus.UNAUTHORIZED.value(), null);
+    }
+    
+    public static<U> ResponseMessage<U> forbidden(String message){
+        return new ResponseMessage<>(message, HttpStatus.FORBIDDEN.value(), null);
+    }
+    
     public static<U> ResponseMessage<U> error(String message, int status){
         return new ResponseMessage<>(message, status, null);
     }

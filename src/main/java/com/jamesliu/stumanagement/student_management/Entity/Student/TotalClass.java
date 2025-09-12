@@ -1,6 +1,7 @@
 package com.jamesliu.stumanagement.student_management.Entity.Student;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 @Entity
@@ -16,6 +17,7 @@ public class TotalClass {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "major_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Major major;
 
     @OneToMany(mappedBy = "totalClass", cascade = CascadeType.ALL)

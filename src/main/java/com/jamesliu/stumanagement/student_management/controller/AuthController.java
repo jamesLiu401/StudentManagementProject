@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +37,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/auth")
+@CrossOrigin(origins = "*")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -67,7 +69,7 @@ public class AuthController {
      * @return 包含JWT令牌、用户名、角色等信息的响应
      */
     @PostMapping("/login")
-    public ResponseMessage<Map<String, Object>> login(@RequestBody User loginUser) {
+    public ResponseEntity<ResponseMessage<Map<String, Object>>> login(@RequestBody User loginUser) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -90,12 +92,14 @@ public class AuthController {
             responseData.put("role", user.getRole());
             responseData.put("userId", user.getUserId());
             
-            return ResponseMessage.success(responseData);
+            ResponseMessage<Map<String, Object>> response = ResponseMessage.success(responseData);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             // 记录详细错误信息用于调试
             System.err.println("登录错误: " + e.getMessage());
             e.printStackTrace();
-            return ResponseMessage.error("用户名或密码错误");
+            ResponseMessage<Map<String, Object>> response = ResponseMessage.unauthorized("用户名或密码错误");
+            return ResponseEntity.status(401).body(response);
         }
     }
 

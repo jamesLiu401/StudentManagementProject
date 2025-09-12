@@ -1,6 +1,7 @@
 package com.jamesliu.stumanagement.student_management.Entity.Student;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * 学生实体类
@@ -55,6 +56,7 @@ public class Student {
     //班级
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private SubClass stuClass;
 
     //年级
