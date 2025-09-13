@@ -1,6 +1,7 @@
 package com.jamesliu.stumanagement.student_management.Entity.Student;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 /**
@@ -58,6 +59,7 @@ public class Academy {
     private String address; // 学院地址
 
     @OneToMany(mappedBy = "academy", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Major> majors;
 
     // Getters and Setters

@@ -2,6 +2,7 @@ package com.jamesliu.stumanagement.student_management.Entity.Student;
 
 import com.jamesliu.stumanagement.student_management.Entity.Teacher.Teacher;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 /**
@@ -44,7 +45,7 @@ public class Major {
     @Column(name = "major_name", nullable = false)
     private String majorName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne()
     @JoinColumn(name = "academy_id")
     private Academy academy;
 
@@ -56,6 +57,7 @@ public class Major {
     private Teacher counselor;
 
     @OneToMany(mappedBy = "major", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<TotalClass> totalClasses;
 
     // Getters and Setters

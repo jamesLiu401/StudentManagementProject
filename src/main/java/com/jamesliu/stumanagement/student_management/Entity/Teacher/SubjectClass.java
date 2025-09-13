@@ -12,11 +12,11 @@ public class SubjectClass {
     @Column(name = "subject_class_id")
     private Integer subjectClassId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "subject_id")
     private Subject subject;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "sub_class_id")
     private SubClass subClass;
 

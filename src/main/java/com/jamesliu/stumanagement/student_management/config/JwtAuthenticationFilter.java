@@ -33,7 +33,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String username;
 
+        System.out.println("JWT过滤器处理请求: " + request.getRequestURI());
+        System.out.println("Authorization头: " + authHeader);
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println("未找到有效的Authorization头");
             filterChain.doFilter(request, response);
             return;
         }
@@ -41,19 +45,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7);
         try {
             username = jwtUtils.getUsernameFromToken(jwt);
+            System.out.println("从JWT中提取用户名: " + username);
         } catch (Exception e) {
+            System.out.println("JWT解析失败: " + e.getMessage());
             filterChain.doFilter(request, response);
             return;
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            System.out.println("用户详情: " + userDetails.getUsername() + ", 权限: " + userDetails.getAuthorities());
             
             if (jwtUtils.validateToken(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                System.out.println("JWT验证成功，设置认证信息");
+            } else {
+                System.out.println("JWT验证失败");
             }
         }
         filterChain.doFilter(request, response);

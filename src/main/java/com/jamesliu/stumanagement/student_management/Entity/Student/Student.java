@@ -54,10 +54,10 @@ public class Student {
     private String stuMajor;
 
     //班级
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne()
     @JoinColumn(name = "class_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    private SubClass stuClass;
+    private SubClass stuClassId;
 
     //年级
     @Column(name="stu_grade")
@@ -104,12 +104,12 @@ public class Student {
         this.stuMajor = stuMajor;
     }
 
-    public SubClass getStuClass() {
-        return stuClass;
+    public SubClass getStuClassId() {
+        return stuClassId;
     }
 
-    public void setStuClass(SubClass stuClass) {
-        this.stuClass = stuClass;
+    public void setStuClassId(SubClass stuClassId) {
+        this.stuClassId = stuClassId;
     }
 
     public Integer getGrade() {
@@ -143,7 +143,7 @@ public class Student {
                 ", stuName='" + stuName + '\'' +
                 ", stuGender=" + stuGender +
                 ", stuMajor='" + stuMajor + '\'' +
-                ", stuClass=" + stuClass +
+                ", stuClass=" + stuClassId +
                 ", grade=" + grade +
                 ", stuTel='" + stuTel + '\'' +
                 ", stuAddress='" + stuAddress + '\'' +

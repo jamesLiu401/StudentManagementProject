@@ -20,9 +20,9 @@ public interface StudentRepository extends JpaRepository<Student, Integer> {
     @NonNull
     List<Student> findByStuNameContaining(@NonNull String name);
     
-    // 根据班级ID查询
+    // 根据班级ID查询（通过属性路径）
     @NonNull
-    List<Student> findByStuClassSubClassId(@NonNull Integer classId);
+    List<Student> findByStuClassId_SubClassId(@NonNull Integer classId);
     
     // 分页查询
     @NonNull
@@ -37,10 +37,10 @@ public interface StudentRepository extends JpaRepository<Student, Integer> {
     @NonNull
     List<Student> findByGrade(@NonNull Integer grade);
     
-    // 根据小班查询学生
+    // 根据小班对象查询学生
     @NonNull
-    List<Student> findByStuClass(@NonNull SubClass stuClass);
+    List<Student> findByStuClassId(@NonNull SubClass stuClass);
     
     // 统计小班学生数量
-    long countByStuClass(@NonNull SubClass stuClass);
+    long countByStuClassId(@NonNull SubClass stuClass);
 }

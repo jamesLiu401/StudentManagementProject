@@ -65,7 +65,7 @@ public class StudentService implements IStudentService {
     public Student addStudent(Student student) {
         // 智能创建关联数据
         SubClass subClass = ensureClassExists(student);
-        student.setStuClass(subClass);
+        student.setStuClassId(subClass);
         
         return studentRepository.save(student);
     }
@@ -75,8 +75,8 @@ public class StudentService implements IStudentService {
      */
     private SubClass ensureClassExists(Student student) {
         // 如果学生已经指定了班级，直接返回
-        if (student.getStuClass() != null && student.getStuClass().getSubClassId() != null) {
-            return subClassRepository.findById(student.getStuClass().getSubClassId())
+        if (student.getStuClassId() != null && student.getStuClassId().getSubClassId() != null) {
+            return subClassRepository.findById(student.getStuClassId().getSubClassId())
                     .orElseThrow(() -> new RuntimeException("指定的班级不存在"));
         }
         
@@ -174,7 +174,7 @@ public class StudentService implements IStudentService {
                     existingStudent.setStuName(student.getStuName());
                     existingStudent.setStuGender(student.isStuGender());
                     existingStudent.setStuMajor(student.getStuMajor());
-                    existingStudent.setStuClass(student.getStuClass());
+                    existingStudent.setStuClassId(student.getStuClassId());
                     existingStudent.setGrade(student.getGrade());
                     existingStudent.setStuTel(student.getStuTel());
                     existingStudent.setStuAddress(student.getStuAddress());

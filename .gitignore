@@ -31,3 +31,33 @@ build/
 
 ### VS Code ###
 .vscode/
+/stumange_frontend/node_modules/
+/Javadoc/
+!/Javadoc/
+!/.idea/
+!/stumange_frontend/node_modules/
+!/API接口文档.md
+!/Java开发文档.md
+!/mvnw
+
+!/pom.xml
+
+!/mvnw.cmd
+
+!/student_management.iml
+
+!/.vscode/
+
+!/.mvn/
+!/stumange_frontend/README.md
+!/stumange_frontend/start.bat
+
+!/stumange_frontend/start.sh
+!/stumange_frontend/启动说明.md
+!/target/
+!/stumange_frontend/fix-start.bat
+
+!/stumange_frontend/package.json
+
+!/stumange_frontend/package-lock.json
+!/stumange_frontend/.babelrc

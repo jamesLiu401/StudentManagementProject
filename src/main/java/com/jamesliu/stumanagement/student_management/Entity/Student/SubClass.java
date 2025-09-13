@@ -2,6 +2,7 @@ package com.jamesliu.stumanagement.student_management.Entity.Student;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 @Entity
@@ -15,12 +16,14 @@ public class SubClass {
     @Column(name = "sub_class_name", nullable = false)
     private String subClassName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "total_class_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnore
     private TotalClass totalClass;
 
-    @OneToMany(mappedBy = "stuClass", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "stuClassId", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Student> students;
 
     // Getters and Setters
