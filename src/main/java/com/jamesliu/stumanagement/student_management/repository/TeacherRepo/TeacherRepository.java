@@ -4,6 +4,8 @@ import com.jamesliu.stumanagement.student_management.Entity.Teacher.Teacher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
@@ -50,4 +52,11 @@ public interface TeacherRepository extends JpaRepository<Teacher, Integer> {
     long countByDepartment(@NonNull String department);
     long countByTitle(@NonNull String title);
     long countByDepartmentAndTitle(@NonNull String department, @NonNull String title);
+    
+    // 分别查询关联数据的方法
+    @Query("SELECT t FROM Teacher t LEFT JOIN FETCH t.majors WHERE t.teacherId = :id")
+    Optional<Teacher> findByIdWithMajors(@Param("id") Integer id);
+    
+    @Query("SELECT t FROM Teacher t LEFT JOIN FETCH t.subjectClasses WHERE t.teacherId = :id")
+    Optional<Teacher> findByIdWithSubjectClasses(@Param("id") Integer id);
 }

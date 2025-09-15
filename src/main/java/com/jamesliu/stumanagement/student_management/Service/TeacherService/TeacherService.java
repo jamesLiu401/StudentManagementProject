@@ -2,6 +2,7 @@ package com.jamesliu.stumanagement.student_management.Service.TeacherService;
 
 import com.jamesliu.stumanagement.student_management.Entity.Teacher.Teacher;
 import com.jamesliu.stumanagement.student_management.repository.TeacherRepo.TeacherRepository;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,6 +51,30 @@ public class TeacherService implements ITeacherService {
     @Transactional(readOnly = true)
     public Optional<Teacher> findById(Integer id) {
         return teacherRepository.findById(id);
+    }
+    
+    @Transactional(readOnly = true)
+    public Optional<Teacher> findByIdWithDetails(Integer id) {
+        // 先获取基本教师信息
+        Optional<Teacher> teacherOpt = teacherRepository.findById(id);
+        if (teacherOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        Teacher teacher = teacherOpt.get();
+        
+        // 分别加载关联数据
+        Optional<Teacher> teacherWithMajors = teacherRepository.findByIdWithMajors(id);
+        if (teacherWithMajors.isPresent()) {
+            teacher.setMajors(teacherWithMajors.get().getMajors());
+        }
+        
+        Optional<Teacher> teacherWithSubjectClasses = teacherRepository.findByIdWithSubjectClasses(id);
+        if (teacherWithSubjectClasses.isPresent()) {
+            teacher.setSubjectClasses(teacherWithSubjectClasses.get().getSubjectClasses());
+        }
+        
+        return Optional.of(teacher);
     }
     
     @Override

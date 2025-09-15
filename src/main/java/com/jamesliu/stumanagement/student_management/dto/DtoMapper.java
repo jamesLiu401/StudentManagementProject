@@ -71,6 +71,54 @@ public class DtoMapper {
         return dto;
     }
 
+    public static TeacherDetailDTO toDetailDto(Teacher entity) {
+        if (entity == null) return null;
+        TeacherDetailDTO dto = new TeacherDetailDTO();
+        dto.setTeacherId(entity.getTeacherId());
+        dto.setTeacherNo(entity.getTeacherNo());
+        dto.setTeacherName(entity.getTeacherName());
+        dto.setDepartment(entity.getDepartment());
+        dto.setTitle(entity.getTitle());
+        
+        // 映射关联的专业数据
+        if (entity.getMajors() != null) {
+            dto.setMajors(entity.getMajors().stream()
+                .map(DtoMapper::toDto)
+                .toList());
+        }
+        
+        // 映射关联的课程班级数据
+        if (entity.getSubjectClasses() != null) {
+            dto.setSubjectClasses(entity.getSubjectClasses().stream()
+                .map(DtoMapper::toDto)
+                .toList());
+        }
+        
+        return dto;
+    }
+
+    public static SubjectClassDTO toDto(com.jamesliu.stumanagement.student_management.Entity.Teacher.SubjectClass entity) {
+        if (entity == null) return null;
+        SubjectClassDTO dto = new SubjectClassDTO();
+        dto.setSubjectClassId(entity.getSubjectClassId());
+        dto.setSemester(entity.getSemester());
+        dto.setSchoolYear(entity.getSchoolYear());
+        
+        if (entity.getSubject() != null) {
+            dto.setSubjectId(Math.toIntExact(entity.getSubject().getSubjectId()));
+            dto.setSubjectName(entity.getSubject().getSubjectName());
+            dto.setAcademy(entity.getSubject().getSubjectAcademy());
+            dto.setCredit(entity.getSubject().getCredit());
+        }
+        
+        if (entity.getSubClass() != null) {
+            dto.setSubClassId(entity.getSubClass().getSubClassId());
+            dto.setSubClassName(entity.getSubClass().getSubClassName());
+        }
+        
+        return dto;
+    }
+
     public static PaymentDTO toDto(Payment entity) {
         if (entity == null) return null;
         PaymentDTO dto = new PaymentDTO();
@@ -113,33 +161,6 @@ public class DtoMapper {
         dto.setContactPhone(entity.getContactPhone());
         dto.setAddress(entity.getAddress());
         return dto;
-    }
-
-    /**
-     * DTO -> Entity converters
-     */
-    public static Academy fromDto(AcademyDTO dto) {
-        if (dto == null) return null;
-        Academy entity = new Academy();
-        entity.setAcademyId(dto.getAcademyId());
-        entity.setAcademyName(dto.getAcademyName());
-        entity.setAcademyCode(dto.getAcademyCode());
-        entity.setDescription(dto.getDescription());
-        entity.setDeanName(dto.getDeanName());
-        entity.setContactPhone(dto.getContactPhone());
-        entity.setAddress(dto.getAddress());
-        return entity;
-    }
-
-    public static Teacher fromDto(TeacherDTO dto) {
-        if (dto == null) return null;
-        Teacher entity = new Teacher();
-        entity.setTeacherId(dto.getTeacherId());
-        entity.setTeacherNo(dto.getTeacherNo());
-        entity.setTeacherName(dto.getTeacherName());
-        entity.setDepartment(dto.getDepartment());
-        entity.setTitle(dto.getTitle());
-        return entity;
     }
 }
 

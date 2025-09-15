@@ -40,10 +40,19 @@ public class AcademyService implements IAcademyService {
     // 基础 CRUD 操作
     @Override
     public Academy saveAcademy(Academy academy) {
-        if (academy.getAcademyName() != null && existsByAcademyName(academy.getAcademyName())) {
+        Academy dup_academy = academyRepository.findById(academy.getAcademyId())
+                .orElseThrow(() -> new IllegalArgumentException("学院不存在"));
+        // 检查学院名称是否被其他学院使用
+        String academyName = academy.getAcademyName();
+        String academyCode = academy.getAcademyCode();
+        if (academyName != null
+                && !academyName.equals(dup_academy.getAcademyName())
+                && existsByAcademyName(academyName)) {
             throw new IllegalArgumentException("学院名称已存在");
         }
-        if (academy.getAcademyCode() != null && existsByAcademyCode(academy.getAcademyCode())) {
+        if (academyCode != null
+                && !academyCode.equals(dup_academy.getAcademyCode())
+                && existsByAcademyCode(academyCode)) {
             throw new IllegalArgumentException("学院代码已存在");
         }
         return academyRepository.save(academy);
@@ -171,9 +180,10 @@ public class AcademyService implements IAcademyService {
     public Academy updateAcademy(Integer id, String academyName, String academyCode, String description, String deanName, String contactPhone, String address) {
         Academy academy = academyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("学院不存在"));
-        
         // 检查学院名称是否被其他学院使用
-        if (academyName != null && !academyName.equals(academy.getAcademyName()) && existsByAcademyName(academyName)) {
+        if (academyName != null
+                && !academyName.equals(academy.getAcademyName())
+                && existsByAcademyName(academyName)) {
             throw new IllegalArgumentException("学院名称已存在");
         }
         
@@ -181,7 +191,6 @@ public class AcademyService implements IAcademyService {
         if (academyCode != null && !academyCode.equals(academy.getAcademyCode()) && existsByAcademyCode(academyCode)) {
             throw new IllegalArgumentException("学院代码已存在");
         }
-        
         if (academyName != null) academy.setAcademyName(academyName);
         if (academyCode != null) academy.setAcademyCode(academyCode);
         if (description != null) academy.setDescription(description);

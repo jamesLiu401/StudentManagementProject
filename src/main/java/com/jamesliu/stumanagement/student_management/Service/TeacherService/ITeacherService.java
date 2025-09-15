@@ -29,6 +29,7 @@ public interface ITeacherService {
     // 基础 CRUD 操作
     Teacher saveTeacher(Teacher teacher);
     Optional<Teacher> findById(Integer id);
+    Optional<Teacher> findByIdWithDetails(Integer id);
     List<Teacher> findAll();
     Page<Teacher> findAll(Pageable pageable);
     void deleteById(Integer id);

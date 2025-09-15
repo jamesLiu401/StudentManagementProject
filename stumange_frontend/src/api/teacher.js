@@ -13,6 +13,10 @@ export const getTeacherById = (id) => {
     return apiClient.get(`/teachers/${id}`);
 };
 
+export const getTeacherBasicById = (id) => {
+    return apiClient.get(`/teachers/${id}/basic`);
+};
+
 export const createTeacher = (teacherData) => {
     return apiClient.post('/teachers', teacherData);
 };

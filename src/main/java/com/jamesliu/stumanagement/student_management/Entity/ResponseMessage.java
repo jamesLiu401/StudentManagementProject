@@ -1,5 +1,5 @@
 package com.jamesliu.stumanagement.student_management.Entity;
-
+import com.jamesliu.stumanagement.student_management.dto.*;
 import org.springframework.http.HttpStatus;
 
 /**

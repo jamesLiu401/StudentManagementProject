@@ -34,6 +34,9 @@ import Scores from './pages/Scores';
 
 // 学院管理页面
 import Academies from './pages/Academies';
+import AddAcademy from './pages/AddAcademy';
+import EditAcademy from './pages/EditAcademy';
+import AcademyDetail from './pages/AcademyDetail';
 
 // 专业管理页面
 import Majors from './pages/Majors';
@@ -176,6 +179,23 @@ function App() {
 
                         {/* 学院管理路由 */}
                         <Route path="academies" element={<Academies />} />
+                        <Route path="academies/:id" element={<AcademyDetail />} />
+                        <Route
+                            path="academies/add"
+                            element={
+                                <ProtectedRoute requireAdmin={true}>
+                                    <AddAcademy />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="academies/edit/:id"
+                            element={
+                                <ProtectedRoute requireAdmin={true}>
+                                    <EditAcademy />
+                                </ProtectedRoute>
+                            }
+                        />
 
                         {/* 专业管理路由 */}
                         <Route path="majors" element={<Majors />} />

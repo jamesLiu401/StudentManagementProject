@@ -52,12 +52,11 @@ public class Major {
     @Column(name = "grade")
     private Integer grade;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "counselor_id")
     private Teacher counselor;
 
     @OneToMany(mappedBy = "major", cascade = CascadeType.ALL)
-    @JsonIgnore
     private List<TotalClass> totalClasses;
 
     // Getters and Setters

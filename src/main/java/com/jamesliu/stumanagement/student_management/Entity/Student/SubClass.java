@@ -18,8 +18,7 @@ public class SubClass {
 
     @ManyToOne
     @JoinColumn(name = "total_class_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    @JsonIgnore
+    //@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private TotalClass totalClass;
 
     @OneToMany(mappedBy = "stuClassId", cascade = CascadeType.ALL)

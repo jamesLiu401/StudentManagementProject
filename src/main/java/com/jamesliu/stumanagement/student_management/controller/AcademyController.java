@@ -3,6 +3,8 @@ package com.jamesliu.stumanagement.student_management.controller;
 import com.jamesliu.stumanagement.student_management.Entity.ResponseMessage;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Academy;
 import com.jamesliu.stumanagement.student_management.Service.AcademyService.IAcademyService;
+import com.jamesliu.stumanagement.student_management.dto.AcademyDTO;
+import com.jamesliu.stumanagement.student_management.dto.DtoMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -60,21 +62,21 @@ public class AcademyController {
 
     /**
      * 更新学院信息
-     * 
-     * @param id 学院ID
+     *
+     * @param id      学院ID
      * @param academy 更新的学院信息
      * @return 更新后的学院信息
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<Academy> updateAcademy(
+    public ResponseMessage<AcademyDTO> updateAcademy(
             @PathVariable Integer id, 
             @RequestBody Academy academy) {
         try {
             Academy updatedAcademy = academyService.updateAcademy(id,
                 academy.getAcademyName(), academy.getAcademyCode(), academy.getDescription(),
                 academy.getDeanName(), academy.getContactPhone(), academy.getAddress());
-            return ResponseMessage.success(updatedAcademy);
+            return ResponseMessage.success(DtoMapper.toDto(updatedAcademy));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }

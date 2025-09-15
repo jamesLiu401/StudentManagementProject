@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import com.jamesliu.stumanagement.student_management.dto.TeacherDTO;
+import com.jamesliu.stumanagement.student_management.dto.TeacherDetailDTO;
+import com.jamesliu.stumanagement.student_management.dto.DtoMapper;
 
 @RestController
 @RequestMapping("/teachers")
@@ -25,10 +28,10 @@ public class TeacherController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<Teacher> addTeacher(@RequestBody Teacher teacher) {
+    public ResponseMessage<TeacherDTO> addTeacher(@RequestBody Teacher teacher) {
         try {
             Teacher savedTeacher = teacherService.saveTeacher(teacher);
-            return ResponseMessage.success(savedTeacher);
+            return ResponseMessage.success(DtoMapper.toDto(savedTeacher));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -36,14 +39,14 @@ public class TeacherController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<Teacher> updateTeacher(
+    public ResponseMessage<TeacherDTO> updateTeacher(
             @PathVariable Integer id, 
             @RequestBody Teacher teacher) {
         try {
             Teacher updatedTeacher = teacherService.updateTeacher(id, 
                 teacher.getTeacherNo(), teacher.getTeacherName(), 
                 teacher.getDepartment(), teacher.getTitle());
-            return ResponseMessage.success(updatedTeacher);
+            return ResponseMessage.success(DtoMapper.toDto(updatedTeacher));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -58,22 +61,30 @@ public class TeacherController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Teacher> getTeacherById(@PathVariable Integer id) {
+    public ResponseMessage<TeacherDetailDTO> getTeacherById(@PathVariable Integer id) {
+        Optional<Teacher> teacher = teacherService.findByIdWithDetails(id);
+        return teacher.map(t -> ResponseMessage.success(DtoMapper.toDetailDto(t)))
+                .orElse(ResponseMessage.error("教师不存在"));
+    }
+
+    @GetMapping("/{id}/basic")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseMessage<TeacherDTO> getTeacherBasicById(@PathVariable Integer id) {
         Optional<Teacher> teacher = teacherService.findById(id);
-        return teacher.map(ResponseMessage::success)
+        return teacher.map(t -> ResponseMessage.success(DtoMapper.toDto(t)))
                 .orElse(ResponseMessage.error("教师不存在"));
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Teacher>> getAllTeachers() {
+    public ResponseMessage<List<TeacherDTO>> getAllTeachers() {
         List<Teacher> teachers = teacherService.findAll();
-        return ResponseMessage.success(teachers);
+        return ResponseMessage.success(teachers.stream().map(DtoMapper::toDto).toList());
     }
 
     @GetMapping("/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Teacher>> getTeachersByPage(
+    public ResponseMessage<Page<TeacherDTO>> getTeachersByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "teacherId") String sortBy,
@@ -84,44 +95,44 @@ public class TeacherController {
         
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<Teacher> teachers = teacherService.findAll(pageable);
-        return ResponseMessage.success(teachers);
+        return ResponseMessage.success(teachers.map(DtoMapper::toDto));
     }
 
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Teacher>> searchTeachersByName(
+    public ResponseMessage<List<TeacherDTO>> searchTeachersByName(
             @RequestParam String name) {
         List<Teacher> teachers = teacherService.searchTeachers(name);
-        return ResponseMessage.success(teachers);
+        return ResponseMessage.success(teachers.stream().map(DtoMapper::toDto).toList());
     }
 
     @GetMapping("/department/{department}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Teacher>> getTeachersByDepartment(
+    public ResponseMessage<List<TeacherDTO>> getTeachersByDepartment(
             @PathVariable String department) {
         List<Teacher> teachers = teacherService.findByDepartment(department);
-        return ResponseMessage.success(teachers);
+        return ResponseMessage.success(teachers.stream().map(DtoMapper::toDto).toList());
     }
 
     @GetMapping("/title/{title}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Teacher>> getTeachersByTitle(@PathVariable String title) {
+    public ResponseMessage<List<TeacherDTO>> getTeachersByTitle(@PathVariable String title) {
         List<Teacher> teachers = teacherService.findByTitle(title);
-        return ResponseMessage.success(teachers);
+        return ResponseMessage.success(teachers.stream().map(DtoMapper::toDto).toList());
     }
 
     @GetMapping("/department/{department}/title/{title}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Teacher>> getTeachersByDepartmentAndTitle(
+    public ResponseMessage<List<TeacherDTO>> getTeachersByDepartmentAndTitle(
             @PathVariable String department,
             @PathVariable String title) {
         List<Teacher> teachers = teacherService.findByDepartmentAndTitle(department, title);
-        return ResponseMessage.success(teachers);
+        return ResponseMessage.success(teachers.stream().map(DtoMapper::toDto).toList());
     }
 
     @GetMapping("/search/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Teacher>> searchTeachersByNamePage(
+    public ResponseMessage<Page<TeacherDTO>> searchTeachersByNamePage(
             @RequestParam String name,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -133,7 +144,7 @@ public class TeacherController {
         
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<Teacher> teachers = teacherService.findByTeacherNameContaining(name, pageable);
-        return ResponseMessage.success(teachers);
+        return ResponseMessage.success(teachers.map(DtoMapper::toDto));
     }
 
     // 统计相关API

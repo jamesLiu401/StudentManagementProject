@@ -18,8 +18,8 @@ public class TotalClass {
 
     @ManyToOne
     @JoinColumn(name = "major_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    @JsonIgnore
+    //@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    //@JsonIgnore
     private Major major;
 
     @OneToMany(mappedBy = "totalClass", cascade = CascadeType.ALL)

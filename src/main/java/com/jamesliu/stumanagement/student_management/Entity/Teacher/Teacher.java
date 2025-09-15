@@ -1,5 +1,6 @@
 package com.jamesliu.stumanagement.student_management.Entity.Teacher;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Major;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
 
@@ -24,6 +25,7 @@ public class Teacher {
     private String title; // 职称
 
     @OneToMany(mappedBy = "counselor")
+    @JsonIgnore
     private List<Major> majors;
 
     @ManyToMany
@@ -32,6 +34,7 @@ public class Teacher {
         joinColumns = @JoinColumn(name = "teacher_id"),
         inverseJoinColumns = @JoinColumn(name = "subject_class_id")
     )
+    @JsonIgnore
     private List<SubjectClass> subjectClasses;
 
     // Getters and Setters

@@ -56,7 +56,7 @@ public class Student {
     //班级
     @ManyToOne()
     @JoinColumn(name = "class_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    //@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private SubClass stuClassId;
 
     //年级
