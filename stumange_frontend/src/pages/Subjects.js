@@ -15,8 +15,8 @@ const Subjects = () => {
     const [totalPages, setTotalPages] = useState(0);
     const pageSize = 10;
 
-    // 学院名称缓存映射
-    const [academyNameMap, setAcademyNameMap] = useState({});
+    // 学院名称缓存映射（现在直接从DTO获取，不再需要）
+    // const [academyNameMap, setAcademyNameMap] = useState({});
 
     // 查询与排序
     const [keyword, setKeyword] = useState('');
@@ -70,48 +70,48 @@ const Subjects = () => {
         loadSubjects();
     }, [currentPage, sortBy, sortDir]);
 
-    // 查询学院名称（带错误处理）
-    const q_academy_name = async (academy_id) => {
-        let response_academy = await academyApi.getAcademyById(parseInt(academy_id.toString(), 10));
-        try {
-            if (response_academy && response_academy.status === 200) {
-                const academy = response_academy?.data?.data || {};
-                return academy.academyName;
-            } else {
-                setError('加载学院数据失败');
-            }
-        } catch (err) {
-            console.error('加载学院数据失败:', err);
-            setError('加载学院数据失败，请稍后重试');
-        }
-        return null;
-    };
+    // 查询学院名称（带错误处理）- 现在不再需要，因为DTO直接包含学院名称
+    // const q_academy_name = async (academy_id) => {
+    //     let response_academy = await academyApi.getAcademyById(parseInt(academy_id.toString(), 10));
+    //     try {
+    //         if (response_academy && response_academy.status === 200) {
+    //             const academy = response_academy?.data?.data || {};
+    //             return academy.academyName;
+    //         } else {
+    //             setError('加载学院数据失败');
+    //         }
+    //     } catch (err) {
+    //         console.error('加载学院数据失败:', err);
+    //         setError('加载学院数据失败，请稍后重试');
+    //     }
+    //     return null;
+    // };
 
-    // 根据课程列表批量加载学院名称并缓存
-    useEffect(() => {
-        const fetchMissingAcademyNames = async () => {
-            try {
-                const ids = Array.from(new Set(subjects
-                    .map(s => s.academy)
-                    .filter(id => id !== null && id !== undefined)));
-                const missing = ids.filter(id => !(id in academyNameMap));
-                if (missing.length === 0) return;
-                const updates = {};
-                for (const id of missing) {
-                    const name = await q_academy_name(id);
-                    if (name) updates[id] = name;
-                }
-                if (Object.keys(updates).length > 0) {
-                    setAcademyNameMap(prev => ({ ...prev, ...updates }));
-                }
-            } catch (e) {
-                // 已有全局 error 处理
-            }
-        };
-        if (subjects && subjects.length > 0) {
-            fetchMissingAcademyNames();
-        }
-    }, [subjects]);
+    // 根据课程列表批量加载学院名称并缓存 - 现在不再需要
+    // useEffect(() => {
+    //     const fetchMissingAcademyNames = async () => {
+    //         try {
+    //             const ids = Array.from(new Set(subjects
+    //                 .map(s => s.academyId)
+    //                 .filter(id => id !== null && id !== undefined)));
+    //             const missing = ids.filter(id => !(id in academyNameMap));
+    //             if (missing.length === 0) return;
+    //             const updates = {};
+    //             for (const id of missing) {
+    //                 const name = await q_academy_name(id);
+    //                 if (name) updates[id] = name;
+    //             }
+    //             if (Object.keys(updates).length > 0) {
+    //                 setAcademyNameMap(prev => ({ ...prev, ...updates }));
+    //             }
+    //         } catch (e) {
+    //             // 已有全局 error 处理
+    //         }
+    //     };
+    //     if (subjects && subjects.length > 0) {
+    //         fetchMissingAcademyNames();
+    //     }
+    // }, [subjects]);
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
@@ -260,7 +260,7 @@ const Subjects = () => {
                                 <tr key={s.subjectId}>
                                     <td>{s.subjectId}</td>
                                     <td>{s.subjectName}</td>
-                                    <td>{academyNameMap[s.academy] || s.academy || '-'}</td>
+                                    <td>{s.academyName || '-'}</td>
                                     <td>
                                         <Badge bg="info">{s.credit}</Badge>
                                     </td>

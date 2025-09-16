@@ -43,6 +43,11 @@ import java.util.Optional;
 @Repository
 public interface SubjectRepository extends JpaRepository<Subject, Long> {
     
+    // 重写 findById 方法，显式加载 Academy 关联
+    @NonNull
+    @EntityGraph(attributePaths = {"academy"})
+    Optional<Subject> findById(@NonNull Long id);
+    
     // 根据学院查询课程
     @NonNull
     @EntityGraph(attributePaths = {"academy"})

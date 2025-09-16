@@ -148,7 +148,18 @@ public class SubjectService implements ISubjectService {
     public Page<SubjectDTO> findByAcademy(Academy academy, Pageable pageable) {
         return subjectRepository.findByAcademy(academy, pageable).map(DtoMapper::toDto);
     }
-    
+
+    @Override
+    @Transactional(readOnly = true)
+    public Subject createSubjectDTO(SubjectDTO subjectDTO) {
+        Optional<Academy> O_academy = academyRepository.findById(subjectDTO.getAcademyId());
+        Subject m_subject = new Subject();
+        m_subject.setSubjectName(subjectDTO.getSubjectName());
+        m_subject.setCredit(subjectDTO.getCredit());
+        O_academy.ifPresent(m_subject::setAcademy);
+        return subjectRepository.save(m_subject);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public Page<SubjectDTO> findBySubjectNameContaining(String name, Pageable pageable) {

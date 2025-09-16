@@ -47,7 +47,8 @@ public interface ISubjectService {
     
     // 内部方法，返回实体
     Optional<Subject> findEntityById(Long id);
-    
+
+    Subject createSubjectDTO(SubjectDTO subjectDTO);
     // 查询操作
     List<SubjectDTO> findByAcademy(Academy academy);
     List<SubjectDTO> findBySubjectNameContaining(String name);

@@ -51,14 +51,14 @@ public class SubjectController {
     /**
      * 添加课程信息
      * 
-     * @param subject 课程信息对象
+     * @param subjectDTO 课程信息对象
      * @return 保存成功的课程信息
      */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<Subject> addSubject(@RequestBody Subject subject) {
+    public ResponseMessage<Subject> addSubject(@RequestBody SubjectDTO subjectDTO) {
         try {
-            Subject savedSubject = subjectService.createSubject(subject);
+            Subject savedSubject = subjectService.createSubjectDTO(subjectDTO);
             return ResponseMessage.success(savedSubject);
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
@@ -84,7 +84,12 @@ public class SubjectController {
             if (academy.isEmpty()) {
                 return ResponseMessage.error("学院不存在");
             }
-            Subject subject = subjectService.createSubject(subjectName, academy.get(), credit);
+            SubjectDTO subjectDTO = new SubjectDTO();
+            subjectDTO.setSubjectName(subjectName);
+            subjectDTO.setCredit(credit);
+            subjectDTO.setAcademyId(academyId);
+            subjectDTO.setAcademyName(academy.get().getAcademyName());
+            Subject subject = subjectService.createSubjectDTO(subjectDTO);
             return ResponseMessage.success(subject);
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());

@@ -17,9 +17,9 @@ export const createSubject = (subjectData) => {
     return apiClient.post('/subjects', subjectData);
 };
 
-export const createSubjectByParams = (subjectName, academy, credit) => {
+export const createSubjectByParams = (subjectName, academyId, credit) => {
     return apiClient.post('/subjects/create', null, {
-        params: { subjectName, academy, credit }
+        params: { subjectName, academyId, credit }
     });
 };
 
