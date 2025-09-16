@@ -45,7 +45,9 @@ public interface AcademyRepository extends JpaRepository<Academy, Integer> {
     // 根据学院代码查询
     @NonNull
     Optional<Academy> findByAcademyCode(@NonNull String academyCode);
-    
+
+    @NonNull
+    Optional<Academy> findByAcademyId(@NonNull Integer academyId);
     // 根据学院名称模糊查询
     @NonNull
     List<Academy> findByAcademyNameContaining(@NonNull String academyName);

@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import com.jamesliu.stumanagement.student_management.dto.MajorDTO;
+import com.jamesliu.stumanagement.student_management.dto.DtoMapper;
 
 /**
  * 专业服务实现类
@@ -53,25 +55,29 @@ public class MajorService implements IMajorService {
             existsByMajorNameAndGrade(major.getMajorName(), major.getGrade())) {
             throw new IllegalArgumentException("该年级的专业名称已存在");
         }
+        Optional<Academy> o_academy = academyRepository.findByAcademyId(major.getAcademy().getAcademyId());
+        o_academy.ifPresent(major::setAcademy);
+        Optional<Teacher> o_teacher = teacherRepository.findById(major.getCounselor().getTeacherId());
+        o_teacher.ifPresent(major::setCounselor);
         return majorRepository.save(major);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Optional<Major> findById(Integer id) {
-        return majorRepository.findById(id);
+    public Optional<MajorDTO> findById(Integer id) {
+        return majorRepository.findById(id).map(DtoMapper::toDto);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Major> findAll() {
-        return majorRepository.findAll();
+    public List<MajorDTO> findAll() {
+        return majorRepository.findAll().stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Page<Major> findAll(Pageable pageable) {
-        return majorRepository.findAll(pageable);
+    public Page<MajorDTO> findAll(Pageable pageable) {
+        return majorRepository.findAll(pageable).map(DtoMapper::toDto);
     }
     
     @Override
@@ -87,69 +93,69 @@ public class MajorService implements IMajorService {
     // 查询操作
     @Override
     @Transactional(readOnly = true)
-    public List<Major> findByAcademy(Academy academy) {
-        return majorRepository.findByAcademy(academy);
+    public List<MajorDTO> findByAcademy(Academy academy) {
+        return majorRepository.findByAcademy(academy).stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Major> findByGrade(Integer grade) {
-        return majorRepository.findByGrade(grade);
+    public List<MajorDTO> findByGrade(Integer grade) {
+        return majorRepository.findByGrade(grade).stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Major> findByCounselor(Teacher counselor) {
-        return majorRepository.findByCounselor(counselor);
+    public List<MajorDTO> findByCounselor(Teacher counselor) {
+        return majorRepository.findByCounselor(counselor).stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Major> findByMajorNameContaining(String name) {
-        return majorRepository.findByMajorNameContaining(name);
+    public List<MajorDTO> findByMajorNameContaining(String name) {
+        return majorRepository.findByMajorNameContaining(name).stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Major> findByAcademyAndGrade(Academy academy, Integer grade) {
-        return majorRepository.findByAcademyAndGrade(academy, grade);
+    public List<MajorDTO> findByAcademyAndGrade(Academy academy, Integer grade) {
+        return majorRepository.findByAcademyAndGrade(academy, grade).stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Major> findByAcademyAndMajorNameContaining(Academy academy, String name) {
-        return majorRepository.findByAcademyAndMajorNameContaining(academy, name);
+    public List<MajorDTO> findByAcademyAndMajorNameContaining(Academy academy, String name) {
+        return majorRepository.findByAcademyAndMajorNameContaining(academy, name).stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Optional<Major> findByMajorNameAndGrade(String majorName, Integer grade) {
-        return majorRepository.findByMajorNameAndGrade(majorName, grade);
+    public Optional<MajorDTO> findByMajorNameAndGrade(String majorName, Integer grade) {
+        return majorRepository.findByMajorNameAndGrade(majorName, grade).map(DtoMapper::toDto);
     }
     
     // 分页查询
     @Override
     @Transactional(readOnly = true)
-    public Page<Major> findByAcademy(Academy academy, Pageable pageable) {
-        return majorRepository.findByAcademy(academy, pageable);
+    public Page<MajorDTO> findByAcademy(Academy academy, Pageable pageable) {
+        return majorRepository.findByAcademy(academy, pageable).map(DtoMapper::toDto);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Page<Major> findByGrade(Integer grade, Pageable pageable) {
-        return majorRepository.findByGrade(grade, pageable);
+    public Page<MajorDTO> findByGrade(Integer grade, Pageable pageable) {
+        return majorRepository.findByGrade(grade, pageable).map(DtoMapper::toDto);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Page<Major> findByCounselor(Teacher counselor, Pageable pageable) {
-        return majorRepository.findByCounselor(counselor, pageable);
+    public Page<MajorDTO> findByCounselor(Teacher counselor, Pageable pageable) {
+        return majorRepository.findByCounselor(counselor, pageable).map(DtoMapper::toDto);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Page<Major> findByMajorNameContaining(String name, Pageable pageable) {
-        return majorRepository.findByMajorNameContaining(name, pageable);
+    public Page<MajorDTO> findByMajorNameContaining(String name, Pageable pageable) {
+        return majorRepository.findByMajorNameContaining(name, pageable).map(DtoMapper::toDto);
     }
     
     // 统计操作
@@ -221,24 +227,29 @@ public class MajorService implements IMajorService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<Major> searchMajors(String keyword) {
+    public List<MajorDTO> searchMajors(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return findAll();
         }
-        
-        return majorRepository.findByMajorNameContaining(keyword.trim());
+        return majorRepository.findByMajorNameContaining(keyword.trim()).stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Major> getMajorsByAcademyId(Integer academyId) {
+    public List<MajorDTO> getMajorsByAcademyId(Integer academyId) {
         Optional<Academy> academy = academyRepository.findById(academyId);
         return academy.map(this::findByAcademy).orElse(List.of());
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Major> getMajorsByGrade(Integer grade) {
+    public List<MajorDTO> getMajorsByGrade(Integer grade) {
         return findByGrade(grade);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Major> findEntityById(Integer id) {
+        return majorRepository.findById(id);
     }
 }

@@ -1,6 +1,7 @@
 package com.jamesliu.stumanagement.student_management.Entity.Student;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * 课程实体类
@@ -15,7 +16,7 @@ import jakarta.persistence.*;
  * 
  * <p>关联关系：</p>
  * <ul>
- *   <li>多对一：课程属于学院(Academy) - 通过学院名称关联</li>
+ *   <li>多对一：课程属于学院(Academy) - 通过学院ID关联</li>
  *   <li>一对多：课程可以被多个教师教授</li>
  * </ul>
  * 
@@ -23,7 +24,7 @@ import jakarta.persistence.*;
  * <ul>
  *   <li>表名：subject_table</li>
  *   <li>主键：subject_id (自增)</li>
- *   <li>字段：subject_name, subject_academy, credit</li>
+ *   <li>字段：subject_name, academy_id, credit</li>
  * </ul>
  * 
  * @author JamesLiu
@@ -41,8 +42,9 @@ public class Subject {
     @Column(name = "subject_name", nullable = false)
     private String subjectName;
 
-    @Column(name = "subject_academy")
-    private String subjectAcademy;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "academy_id")
+    private Academy academy;
 
     @Column(name = "credit")
     private Double credit;
@@ -64,12 +66,12 @@ public class Subject {
         this.subjectName = subjectName;
     }
 
-    public String getSubjectAcademy() {
-        return subjectAcademy;
+    public Academy getAcademy() {
+        return academy;
     }
 
-    public void setSubjectAcademy(String subjectAcademy) {
-        this.subjectAcademy = subjectAcademy;
+    public void setAcademy(Academy academy) {
+        this.academy = academy;
     }
 
     public Double getCredit() {
@@ -85,7 +87,7 @@ public class Subject {
         return "Subject{" +
                 "subjectId=" + subjectId +
                 ", subjectName='" + subjectName + '\'' +
-                ", subjectAcademy='" + subjectAcademy + '\'' +
+                ", academy=" + (academy != null ? academy.getAcademyName() : null) +
                 ", credit=" + credit +
                 '}';
     }

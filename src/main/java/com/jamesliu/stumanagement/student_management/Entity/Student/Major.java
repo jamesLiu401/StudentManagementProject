@@ -45,18 +45,19 @@ public class Major {
     @Column(name = "major_name", nullable = false)
     private String majorName;
 
-    @ManyToOne()
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "academy_id")
     private Academy academy;
 
     @Column(name = "grade")
     private Integer grade;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "counselor_id")
     private Teacher counselor;
 
     @OneToMany(mappedBy = "major", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<TotalClass> totalClasses;
 
     // Getters and Setters

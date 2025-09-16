@@ -3,6 +3,7 @@ package com.jamesliu.stumanagement.student_management.Service.ClassService;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Major;
 import com.jamesliu.stumanagement.student_management.Entity.Student.SubClass;
 import com.jamesliu.stumanagement.student_management.Entity.Student.TotalClass;
+import com.jamesliu.stumanagement.student_management.dto.SubClassDTO;
 import com.jamesliu.stumanagement.student_management.repository.StuRepo.MajorRepository;
 import com.jamesliu.stumanagement.student_management.repository.StuRepo.SubClassRepository;
 import com.jamesliu.stumanagement.student_management.repository.StuRepo.TotalClassRepository;
@@ -85,7 +86,17 @@ public class ClassService implements IClassService {
     public List<TotalClass> findTotalClassesByMajor(Major major) {
         return totalClassRepository.findByMajor(major);
     }
-    
+
+    @Override
+    @Transactional
+    public SubClass saveSubClassDTO(SubClassDTO subClassDTO){
+        TotalClass m_totalClass = totalClassRepository.findByTotalClassId(subClassDTO.getTotalClassId());
+        SubClass subClass = new SubClass();
+        subClass.setSubClassName(subClassDTO.getSubClassName());
+        subClass.setTotalClass(m_totalClass);
+        return subClassRepository.save(subClass);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<TotalClass> findTotalClassesByMajorId(Integer majorId) {

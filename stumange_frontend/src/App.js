@@ -40,12 +40,26 @@ import AcademyDetail from './pages/AcademyDetail';
 
 // 专业管理页面
 import Majors from './pages/Majors';
+import MajorDetail from './pages/MajorDetail';
+import AddMajor from './pages/AddMajor';
+import EditMajor from './pages/EditMajor';
 
 // 班级管理页面
 import Classes from './pages/Classes';
+import TotalClasses from './pages/TotalClasses';
+import SubClasses from './pages/SubClasses';
+import AddTotalClass from './pages/AddTotalClass';
+import AddSubClass from './pages/AddSubClass';
+import TotalClassDetail from './pages/TotalClassDetail';
+import EditTotalClass from './pages/EditTotalClass';
+import SubClassDetail from './pages/SubClassDetail';
+import EditSubClass from './pages/EditSubClass';
 
 // 课程管理页面
 import Subjects from './pages/Subjects';
+import SubjectDetail from './pages/SubjectDetail';
+import AddSubject from './pages/AddSubject';
+import EditSubject from './pages/EditSubject';
 
 // 仪表板页面
 import Dashboard from './pages/Dashboard';
@@ -199,12 +213,86 @@ function App() {
 
                         {/* 专业管理路由 */}
                         <Route path="majors" element={<Majors />} />
+                        <Route path="majors/:id" element={<MajorDetail />} />
+                        <Route
+                            path="majors/add"
+                            element={
+                                <ProtectedRoute requireAdmin={true}>
+                                    <AddMajor />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="majors/edit/:id"
+                            element={
+                                <ProtectedRoute requireAdmin={true}>
+                                    <EditMajor />
+                                </ProtectedRoute>
+                            }
+                        />
 
                         {/* 班级管理路由 */}
                         <Route path="classes" element={<Classes />} />
+                        
+                        {/* 总班级管理路由 */}
+                        <Route path="total-classes" element={<TotalClasses />} />
+                        <Route path="total-classes/:id" element={<TotalClassDetail />} />
+                        <Route
+                            path="total-classes/add"
+                            element={
+                                <ProtectedRoute requireAdmin={true}>
+                                    <AddTotalClass />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="total-classes/edit/:id"
+                            element={
+                                <ProtectedRoute requireAdmin={true}>
+                                    <EditTotalClass />
+                                </ProtectedRoute>
+                            }
+                        />
+                        
+                        {/* 子班级管理路由 */}
+                        <Route path="sub-classes" element={<SubClasses />} />
+                        <Route path="sub-classes/:id" element={<SubClassDetail />} />
+                        <Route
+                            path="sub-classes/add"
+                            element={
+                                <ProtectedRoute requireAdmin={true}>
+                                    <AddSubClass />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="sub-classes/edit/:id"
+                            element={
+                                <ProtectedRoute requireAdmin={true}>
+                                    <EditSubClass />
+                                </ProtectedRoute>
+                            }
+                        />
 
                         {/* 课程管理路由 */}
                         <Route path="subjects" element={<Subjects />} />
+                        <Route path="subjects/:id" element={<SubjectDetail />} />
+                        <Route
+                            path="subjects/add"
+                            element={
+                                <ProtectedRoute requireAdmin={true}>
+                                    <AddSubject />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="subjects/edit/:id"
+                            element={
+                                <ProtectedRoute requireAdmin={true}>
+                                    <EditSubject />
+                                </ProtectedRoute>
+                            }
+                        />
                     </Route>
 
                     {/* 其他路由重定向到登录 */}

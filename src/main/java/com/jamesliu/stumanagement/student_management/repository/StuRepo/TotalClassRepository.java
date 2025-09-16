@@ -28,4 +28,7 @@ public interface TotalClassRepository extends JpaRepository<TotalClass, Integer>
     // 根据班级名称模糊查询
     @NonNull
     List<TotalClass> findByTotalClassNameContaining(@NonNull String name);
+
+    @NonNull
+    TotalClass findByTotalClassId(@NonNull Integer totalClassId);
 }

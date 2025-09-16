@@ -11,6 +11,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import com.jamesliu.stumanagement.student_management.dto.MajorDTO;
+import com.jamesliu.stumanagement.student_management.dto.DtoMapper;
+import java.util.stream.Collectors;
+import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,10 +63,10 @@ public class MajorController {
      */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<Major> addMajor(@RequestBody Major major) {
+    public ResponseMessage<MajorDTO> addMajor(@RequestBody Major major) {
         try {
             Major savedMajor = majorService.saveMajor(major);
-            return ResponseMessage.success(savedMajor);
+            return ResponseMessage.success(DtoMapper.toDto(savedMajor));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -77,13 +81,13 @@ public class MajorController {
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<Major> updateMajor(
+    public ResponseMessage<MajorDTO> updateMajor(
             @PathVariable Integer id, 
             @RequestBody Major major) {
         try {
             Major updatedMajor = majorService.updateMajor(id, major.getMajorName(), 
                 major.getAcademy(), major.getGrade(), major.getCounselor());
-            return ResponseMessage.success(updatedMajor);
+            return ResponseMessage.success(DtoMapper.toDto(updatedMajor));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -110,8 +114,8 @@ public class MajorController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Major> getMajorById(@PathVariable Integer id) {
-        Optional<Major> major = majorService.findById(id);
+    public ResponseMessage<MajorDTO> getMajorById(@PathVariable Integer id) {
+        Optional<MajorDTO> major = majorService.findById(id);
         return major.map(ResponseMessage::success)
                 .orElse(ResponseMessage.error("专业不存在"));
     }
@@ -123,8 +127,8 @@ public class MajorController {
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Major>> getAllMajors() {
-        List<Major> majors = majorService.findAll();
+    public ResponseMessage<List<MajorDTO>> getAllMajors() {
+        List<MajorDTO> majors = majorService.findAll();
         return ResponseMessage.success(majors);
     }
 
@@ -139,7 +143,7 @@ public class MajorController {
      */
     @GetMapping("/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Major>> getMajorsByPage(
+    public ResponseMessage<Page<MajorDTO>> getMajorsByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "majorId") String sortBy,
@@ -149,7 +153,7 @@ public class MajorController {
                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Major> majors = majorService.findAll(pageable);
+        Page<MajorDTO> majors = majorService.findAll(pageable);
         return ResponseMessage.success(majors);
     }
 
@@ -161,8 +165,8 @@ public class MajorController {
      */
     @GetMapping("/academy/{academyId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Major>> getMajorsByAcademy(@PathVariable Integer academyId) {
-        List<Major> majors = majorService.getMajorsByAcademyId(academyId);
+    public ResponseMessage<List<MajorDTO>> getMajorsByAcademy(@PathVariable Integer academyId) {
+        List<MajorDTO> majors = majorService.getMajorsByAcademyId(academyId);
         return ResponseMessage.success(majors);
     }
 
@@ -174,8 +178,8 @@ public class MajorController {
      */
     @GetMapping("/grade/{grade}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Major>> getMajorsByGrade(@PathVariable Integer grade) {
-        List<Major> majors = majorService.getMajorsByGrade(grade);
+    public ResponseMessage<List<MajorDTO>> getMajorsByGrade(@PathVariable Integer grade) {
+        List<MajorDTO> majors = majorService.getMajorsByGrade(grade);
         return ResponseMessage.success(majors);
     }
 
@@ -187,14 +191,14 @@ public class MajorController {
      */
     @GetMapping("/name/{majorName}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Major>> getMajorsByName(@PathVariable String majorName) {
-        List<Major> majors = majorService.searchMajors(majorName);
+    public ResponseMessage<List<MajorDTO>> getMajorsByName(@PathVariable String majorName) {
+        List<MajorDTO> majors = majorService.searchMajors(majorName);
         return ResponseMessage.success(majors);
     }
 
     @GetMapping("/grade/{grade}/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Major>> getMajorsByGradePage(
+    public ResponseMessage<Page<MajorDTO>> getMajorsByGradePage(
             @PathVariable Integer grade,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -205,13 +209,13 @@ public class MajorController {
                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Major> majors = majorService.findByGrade(grade, pageable);
+        Page<MajorDTO> majors = majorService.findByGrade(grade, pageable);
         return ResponseMessage.success(majors);
     }
 
     @GetMapping("/academy/{academyId}/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Major>> getMajorsByAcademyPage(
+    public ResponseMessage<Page<MajorDTO>> getMajorsByAcademyPage(
             @PathVariable Integer academyId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -225,7 +229,7 @@ public class MajorController {
         try {
             var academy = academyService.findById(academyId)
                     .orElseThrow(() -> new IllegalArgumentException("学院不存在"));
-            Page<Major> majors = majorService.findByAcademy(academy, pageable);
+            Page<MajorDTO> majors = majorService.findByAcademy(academy, pageable);
             return ResponseMessage.success(majors);
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
@@ -234,11 +238,11 @@ public class MajorController {
 
     @GetMapping("/counselor/{counselorId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Major>> getMajorsByCounselor(@PathVariable Integer counselorId) {
+    public ResponseMessage<List<MajorDTO>> getMajorsByCounselor(@PathVariable Integer counselorId) {
         try {
             var counselor = teacherService.findById(counselorId)
                     .orElseThrow(() -> new IllegalArgumentException("辅导员不存在"));
-            List<Major> majors = majorService.findByCounselor(counselor);
+            List<MajorDTO> majors = majorService.findByCounselor(counselor);
             return ResponseMessage.success(majors);
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
@@ -247,7 +251,7 @@ public class MajorController {
 
     @GetMapping("/counselor/{counselorId}/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Major>> getMajorsByCounselorPage(
+    public ResponseMessage<Page<MajorDTO>> getMajorsByCounselorPage(
             @PathVariable Integer counselorId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -261,7 +265,7 @@ public class MajorController {
         try {
             var counselor = teacherService.findById(counselorId)
                     .orElseThrow(() -> new IllegalArgumentException("辅导员不存在"));
-            Page<Major> majors = majorService.findByCounselor(counselor, pageable);
+            Page<MajorDTO> majors = majorService.findByCounselor(counselor, pageable);
             return ResponseMessage.success(majors);
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
@@ -270,13 +274,13 @@ public class MajorController {
 
     @GetMapping("/academy/{academyId}/grade/{grade}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Major>> getMajorsByAcademyAndGrade(
+    public ResponseMessage<List<MajorDTO>> getMajorsByAcademyAndGrade(
             @PathVariable Integer academyId,
             @PathVariable Integer grade) {
         try {
             var academy = academyService.findById(academyId)
                     .orElseThrow(() -> new IllegalArgumentException("学院不存在"));
-            List<Major> majors = majorService.findByAcademyAndGrade(academy, grade);
+            List<MajorDTO> majors = majorService.findByAcademyAndGrade(academy, grade);
             return ResponseMessage.success(majors);
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
@@ -285,7 +289,7 @@ public class MajorController {
 
     @GetMapping("/name/{majorName}/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Major>> getMajorsByNamePage(
+    public ResponseMessage<Page<MajorDTO>> getMajorsByNamePage(
             @PathVariable String majorName,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -296,7 +300,7 @@ public class MajorController {
                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Major> majors = majorService.findByMajorNameContaining(majorName, pageable);
+        Page<MajorDTO> majors = majorService.findByMajorNameContaining(majorName, pageable);
         return ResponseMessage.success(majors);
     }
 

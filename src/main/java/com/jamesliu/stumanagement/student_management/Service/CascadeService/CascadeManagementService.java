@@ -825,8 +825,6 @@ public class CascadeManagementService {
             throw new RuntimeException("学院不存在: " + academyId);
         }
 
-        String academyName = academy.get().getAcademyName();
-
         if (targetAcademyId != null) {
             // 将课程转移到目标学院
             Optional<Academy> targetAcademy = academyRepository.findById(targetAcademyId);
@@ -834,25 +832,23 @@ public class CascadeManagementService {
                 throw new RuntimeException("目标学院不存在: " + targetAcademyId);
             }
 
-            String targetAcademyName = targetAcademy.get().getAcademyName();
-
             // 获取该学院下的所有课程
-            List<Subject> subjects = subjectRepository.findBySubjectAcademy(academyName);
+            List<Subject> subjects = subjectRepository.findByAcademy(academy.get());
 
             for (Subject subject : subjects) {
                 // 检查目标学院是否已有同名课程
-                if (subjectRepository.findBySubjectAcademyAndSubjectName(targetAcademyName, subject.getSubjectName()).isPresent()) {
+                if (subjectRepository.findByAcademyAndSubjectName(targetAcademy.get(), subject.getSubjectName()).isPresent()) {
                     // 如果存在同名课程，可以选择跳过或删除原课程
                     subjectRepository.delete(subject);
                 } else {
                     // 更新课程所属学院
-                    subject.setSubjectAcademy(targetAcademyName);
+                    subject.setAcademy(targetAcademy.get());
                     subjectRepository.save(subject);
                 }
             }
         } else {
             // 删除该学院下的所有课程
-            List<Subject> subjects = subjectRepository.findBySubjectAcademy(academyName);
+            List<Subject> subjects = subjectRepository.findByAcademy(academy.get());
             subjectRepository.deleteAll(subjects);
         }
     }
@@ -861,20 +857,25 @@ public class CascadeManagementService {
      * 批量更新课程学院
      *
      * @param subjectIds 课程ID列表
-     * @param newAcademy 新学院名称
+     * @param newAcademyId 新学院ID
      */
-    public void batchUpdateSubjectAcademy(List<Long> subjectIds, String newAcademy) {
+    public void batchUpdateSubjectAcademy(List<Long> subjectIds, Integer newAcademyId) {
+        Optional<Academy> newAcademy = academyRepository.findById(newAcademyId);
+        if (newAcademy.isEmpty()) {
+            throw new RuntimeException("目标学院不存在: " + newAcademyId);
+        }
+
         for (Long subjectId : subjectIds) {
             Optional<Subject> subjectOpt = subjectRepository.findById(subjectId);
             if (subjectOpt.isPresent()) {
                 Subject subject = subjectOpt.get();
 
                 // 检查新学院是否已有同名课程
-                if (subjectRepository.findBySubjectAcademyAndSubjectName(newAcademy, subject.getSubjectName()).isPresent()) {
+                if (subjectRepository.findByAcademyAndSubjectName(newAcademy.get(), subject.getSubjectName()).isPresent()) {
                     throw new RuntimeException("目标学院已存在同名课程: " + subject.getSubjectName());
                 }
 
-                subject.setSubjectAcademy(newAcademy);
+                subject.setAcademy(newAcademy.get());
                 subjectRepository.save(subject);
             }
         }
@@ -900,22 +901,27 @@ public class CascadeManagementService {
     /**
      * 获取学院课程统计信息
      *
-     * @param academyName 学院名称
+     * @param academyId 学院ID
      * @return 课程统计信息
      */
-    public CascadeOperationDTO.AcademyStatisticsResponse getAcademySubjectStatistics(String academyName) {
+    public CascadeOperationDTO.AcademyStatisticsResponse getAcademySubjectStatistics(Integer academyId) {
+        Optional<Academy> academy = academyRepository.findById(academyId);
+        if (academy.isEmpty()) {
+            throw new RuntimeException("学院不存在: " + academyId);
+        }
+
         CascadeOperationDTO.AcademyStatisticsResponse response = new CascadeOperationDTO.AcademyStatisticsResponse();
 
         // 统计课程数量
-        long subjectCount = subjectRepository.countBySubjectAcademy(academyName);
+        long subjectCount = subjectRepository.countByAcademy(academy.get());
         response.setSubjectCount(subjectCount);
 
         // 计算总学分
-        Double totalCredits = subjectRepository.sumCreditBySubjectAcademy(academyName);
+        Double totalCredits = subjectRepository.sumCreditByAcademy(academy.get());
         response.setTotalCredits(totalCredits);
 
         // 获取所有学分列表
-        List<Double> credits = subjectRepository.findCreditsByAcademy(academyName);
+        List<Double> credits = subjectRepository.findCreditsByAcademy(academy.get());
         response.setCredits(credits);
 
         return response;
@@ -932,7 +938,7 @@ public class CascadeManagementService {
         // 检查是否有课程没有指定学院
         List<Subject> allSubjects = subjectRepository.findAll();
         for (Subject subject : allSubjects) {
-            if (subject.getSubjectAcademy() == null || subject.getSubjectAcademy().trim().isEmpty()) {
+            if (subject.getAcademy() == null) {
                 errors.add("课程 '" + subject.getSubjectName() + "' 没有指定学院");
             }
 
@@ -946,13 +952,13 @@ public class CascadeManagementService {
         }
 
         // 检查是否有重复的课程（同一学院下的同名课程）
-        List<String> academies = subjectRepository.findAllAcademies();
-        for (String academy : academies) {
-            List<Subject> academySubjects = subjectRepository.findBySubjectAcademy(academy);
+        List<Academy> academies = subjectRepository.findAllAcademies();
+        for (Academy academy : academies) {
+            List<Subject> academySubjects = subjectRepository.findByAcademy(academy);
             for (int i = 0; i < academySubjects.size(); i++) {
                 for (int j = i + 1; j < academySubjects.size(); j++) {
                     if (academySubjects.get(i).getSubjectName().equals(academySubjects.get(j).getSubjectName())) {
-                        errors.add("学院 '" + academy + "' 存在重复课程: " + academySubjects.get(i).getSubjectName());
+                        errors.add("学院 '" + academy.getAcademyName() + "' 存在重复课程: " + academySubjects.get(i).getSubjectName());
                     }
                 }
             }

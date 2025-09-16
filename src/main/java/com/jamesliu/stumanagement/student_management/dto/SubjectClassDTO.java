@@ -7,7 +7,8 @@ public class SubjectClassDTO {
     private Integer subjectClassId;
     private Integer subjectId;
     private String subjectName;
-    private String academy;
+    private Integer academyId;
+    private String academyName;
     private Double credit;
     private Integer subClassId;
     private String subClassName;
@@ -24,8 +25,11 @@ public class SubjectClassDTO {
     public String getSubjectName() { return subjectName; }
     public void setSubjectName(String subjectName) { this.subjectName = subjectName; }
     
-    public String getAcademy() { return academy; }
-    public void setAcademy(String academy) { this.academy = academy; }
+    public Integer getAcademyId() { return academyId; }
+    public void setAcademyId(Integer academyId) { this.academyId = academyId; }
+    
+    public String getAcademyName() { return academyName; }
+    public void setAcademyName(String academyName) { this.academyName = academyName; }
     
     public Double getCredit() { return credit; }
     public void setCredit(Double credit) { this.credit = credit; }

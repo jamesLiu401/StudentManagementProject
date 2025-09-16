@@ -1,7 +1,11 @@
 package com.jamesliu.stumanagement.student_management.Service.SubjectService;
 
 import com.jamesliu.stumanagement.student_management.Entity.Student.Subject;
+import com.jamesliu.stumanagement.student_management.Entity.Student.Academy;
 import com.jamesliu.stumanagement.student_management.repository.StuRepo.SubjectRepository;
+import com.jamesliu.stumanagement.student_management.repository.StuRepo.AcademyRepository;
+import com.jamesliu.stumanagement.student_management.dto.SubjectDTO;
+import com.jamesliu.stumanagement.student_management.dto.DtoMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -49,6 +53,9 @@ public class SubjectService implements ISubjectService {
     @Autowired
     private SubjectRepository subjectRepository;
     
+    @Autowired
+    private AcademyRepository academyRepository;
+    
     @Override
     public Subject saveSubject(Subject subject) {
         return subjectRepository.save(subject);
@@ -56,20 +63,26 @@ public class SubjectService implements ISubjectService {
     
     @Override
     @Transactional(readOnly = true)
-    public Optional<Subject> findById(Long id) {
+    public Optional<SubjectDTO> findById(Long id) {
+        return subjectRepository.findById(id).map(DtoMapper::toDto);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<SubjectDTO> findAll() {
+        return subjectRepository.findAll().stream().map(DtoMapper::toDto).toList();
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Page<SubjectDTO> findAll(Pageable pageable) {
+        return subjectRepository.findAll(pageable).map(DtoMapper::toDto);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Subject> findEntityById(Long id) {
         return subjectRepository.findById(id);
-    }
-    
-    @Override
-    @Transactional(readOnly = true)
-    public List<Subject> findAll() {
-        return subjectRepository.findAll();
-    }
-    
-    @Override
-    @Transactional(readOnly = true)
-    public Page<Subject> findAll(Pageable pageable) {
-        return subjectRepository.findAll(pageable);
     }
     
     @Override
@@ -84,92 +97,92 @@ public class SubjectService implements ISubjectService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<Subject> findByAcademy(String academy) {
-        return subjectRepository.findBySubjectAcademy(academy);
+    public List<SubjectDTO> findByAcademy(Academy academy) {
+        return subjectRepository.findByAcademy(academy).stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Subject> findBySubjectNameContaining(String name) {
-        return subjectRepository.findBySubjectNameContaining(name);
+    public List<SubjectDTO> findBySubjectNameContaining(String name) {
+        return subjectRepository.findBySubjectNameContaining(name).stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Optional<Subject> findBySubjectName(String subjectName) {
-        return subjectRepository.findBySubjectName(subjectName);
+    public Optional<SubjectDTO> findBySubjectName(String subjectName) {
+        return subjectRepository.findBySubjectName(subjectName).map(DtoMapper::toDto);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Optional<Subject> findByAcademyAndSubjectName(String academy, String subjectName) {
-        return subjectRepository.findBySubjectAcademyAndSubjectName(academy, subjectName);
+    public Optional<SubjectDTO> findByAcademyAndSubjectName(Academy academy, String subjectName) {
+        return subjectRepository.findByAcademyAndSubjectName(academy, subjectName).map(DtoMapper::toDto);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Subject> findByCredit(Double credit) {
-        return subjectRepository.findByCredit(credit);
+    public List<SubjectDTO> findByCredit(Double credit) {
+        return subjectRepository.findByCredit(credit).stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Subject> findByCreditBetween(Double minCredit, Double maxCredit) {
-        return subjectRepository.findByCreditBetween(minCredit, maxCredit);
+    public List<SubjectDTO> findByCreditBetween(Double minCredit, Double maxCredit) {
+        return subjectRepository.findByCreditBetween(minCredit, maxCredit).stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Subject> findByAcademyAndCredit(String academy, Double credit) {
-        return subjectRepository.findBySubjectAcademyAndCredit(academy, credit);
+    public List<SubjectDTO> findByAcademyAndCredit(Academy academy, Double credit) {
+        return subjectRepository.findByAcademyAndCredit(academy, credit).stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Subject> findByAcademyAndCreditBetween(String academy, Double minCredit, Double maxCredit) {
-        return subjectRepository.findBySubjectAcademyAndCreditBetween(academy, minCredit, maxCredit);
+    public List<SubjectDTO> findByAcademyAndCreditBetween(Academy academy, Double minCredit, Double maxCredit) {
+        return subjectRepository.findByAcademyAndCreditBetween(academy, minCredit, maxCredit).stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Page<Subject> findByAcademy(String academy, Pageable pageable) {
-        return subjectRepository.findBySubjectAcademy(academy, pageable);
+    public Page<SubjectDTO> findByAcademy(Academy academy, Pageable pageable) {
+        return subjectRepository.findByAcademy(academy, pageable).map(DtoMapper::toDto);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Page<Subject> findBySubjectNameContaining(String name, Pageable pageable) {
-        return subjectRepository.findBySubjectNameContaining(name, pageable);
+    public Page<SubjectDTO> findBySubjectNameContaining(String name, Pageable pageable) {
+        return subjectRepository.findBySubjectNameContaining(name, pageable).map(DtoMapper::toDto);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Page<Subject> findByCredit(Double credit, Pageable pageable) {
-        return subjectRepository.findByCredit(credit, pageable);
+    public Page<SubjectDTO> findByCredit(Double credit, Pageable pageable) {
+        return subjectRepository.findByCredit(credit, pageable).map(DtoMapper::toDto);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Page<Subject> findByCreditBetween(Double minCredit, Double maxCredit, Pageable pageable) {
-        return subjectRepository.findByCreditBetween(minCredit, maxCredit, pageable);
+    public Page<SubjectDTO> findByCreditBetween(Double minCredit, Double maxCredit, Pageable pageable) {
+        return subjectRepository.findByCreditBetween(minCredit, maxCredit, pageable).map(DtoMapper::toDto);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Subject> findByMultipleConditions(String academy, String subjectName, Double minCredit, Double maxCredit) {
-        return subjectRepository.findByMultipleConditions(academy, subjectName, minCredit, maxCredit);
+    public List<SubjectDTO> findByMultipleConditions(Academy academy, String subjectName, Double minCredit, Double maxCredit) {
+        return subjectRepository.findByMultipleConditions(academy, subjectName, minCredit, maxCredit).stream().map(DtoMapper::toDto).toList();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Page<Subject> findByMultipleConditions(String academy, String subjectName, Double minCredit, Double maxCredit, Pageable pageable) {
-        return subjectRepository.findByMultipleConditions(academy, subjectName, minCredit, maxCredit, pageable);
+    public Page<SubjectDTO> findByMultipleConditions(Academy academy, String subjectName, Double minCredit, Double maxCredit, Pageable pageable) {
+        return subjectRepository.findByMultipleConditions(academy, subjectName, minCredit, maxCredit, pageable).map(DtoMapper::toDto);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public long countByAcademy(String academy) {
-        return subjectRepository.countBySubjectAcademy(academy);
+    public long countByAcademy(Academy academy) {
+        return subjectRepository.countByAcademy(academy);
     }
     
     @Override
@@ -186,36 +199,36 @@ public class SubjectService implements ISubjectService {
     
     @Override
     @Transactional(readOnly = true)
-    public long countByAcademyAndCreditBetween(String academy, Double minCredit, Double maxCredit) {
-        return subjectRepository.countBySubjectAcademyAndCreditBetween(academy, minCredit, maxCredit);
+    public long countByAcademyAndCreditBetween(Academy academy, Double minCredit, Double maxCredit) {
+        return subjectRepository.countByAcademyAndCreditBetween(academy, minCredit, maxCredit);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Double sumCreditByAcademy(String academy) {
-        return subjectRepository.sumCreditBySubjectAcademy(academy);
+    public Double sumCreditByAcademy(Academy academy) {
+        return subjectRepository.sumCreditByAcademy(academy);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<String> findAllAcademies() {
+    public List<Academy> findAllAcademies() {
         return subjectRepository.findAllAcademies();
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Double> findCreditsByAcademy(String academy) {
+    public List<Double> findCreditsByAcademy(Academy academy) {
         return subjectRepository.findCreditsByAcademy(academy);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public boolean existsByAcademyAndSubjectName(String academy, String subjectName) {
-        return subjectRepository.findBySubjectAcademyAndSubjectName(academy, subjectName).isPresent();
+    public boolean existsByAcademyAndSubjectName(Academy academy, String subjectName) {
+        return subjectRepository.findByAcademyAndSubjectName(academy, subjectName).isPresent();
     }
     
     @Override
-    public Subject createSubject(String subjectName, String academy, Double credit) {
+    public Subject createSubject(String subjectName, Academy academy, Double credit) {
         // 检查是否已存在相同的课程
         if (existsByAcademyAndSubjectName(academy, subjectName)) {
             throw new IllegalArgumentException("该学院已存在同名课程: " + subjectName);
@@ -223,15 +236,15 @@ public class SubjectService implements ISubjectService {
         
         Subject subject = new Subject();
         subject.setSubjectName(subjectName);
-        subject.setSubjectAcademy(academy);
+        subject.setAcademy(academy);
         subject.setCredit(credit);
         
         return saveSubject(subject);
     }
     
     @Override
-    public Subject updateSubject(Long id, String subjectName, String academy, Double credit) {
-        Optional<Subject> existingSubject = findById(id);
+    public Subject updateSubject(Long id, String subjectName, Academy academy, Double credit) {
+        Optional<Subject> existingSubject = findEntityById(id);
         if (existingSubject.isEmpty()) {
             throw new IllegalArgumentException("课程不存在，ID: " + id);
         }
@@ -239,14 +252,14 @@ public class SubjectService implements ISubjectService {
         Subject subject = existingSubject.get();
         
         // 如果学院或课程名称发生变化，检查是否会产生重复
-        if (!subject.getSubjectAcademy().equals(academy) || !subject.getSubjectName().equals(subjectName)) {
+        if (!subject.getAcademy().equals(academy) || !subject.getSubjectName().equals(subjectName)) {
             if (existsByAcademyAndSubjectName(academy, subjectName)) {
                 throw new IllegalArgumentException("该学院已存在同名课程: " + subjectName);
             }
         }
         
         subject.setSubjectName(subjectName);
-        subject.setSubjectAcademy(academy);
+        subject.setAcademy(academy);
         subject.setCredit(credit);
         
         return saveSubject(subject);
@@ -254,13 +267,13 @@ public class SubjectService implements ISubjectService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<Subject> getSubjectsByAcademy(String academy) {
+    public List<SubjectDTO> getSubjectsByAcademy(Academy academy) {
         return findByAcademy(academy);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<Subject> searchSubjects(String keyword) {
+    public List<SubjectDTO> searchSubjects(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return findAll();
         }

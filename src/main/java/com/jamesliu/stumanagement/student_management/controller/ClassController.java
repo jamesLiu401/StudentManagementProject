@@ -10,6 +10,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import com.jamesliu.stumanagement.student_management.dto.TotalClassDTO;
+import com.jamesliu.stumanagement.student_management.dto.SubClassDTO;
+import com.jamesliu.stumanagement.student_management.dto.DtoMapper;
+import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,10 +62,10 @@ public class ClassController {
      */
     @PostMapping("/total")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<TotalClass> addTotalClass(@RequestBody TotalClass totalClass) {
+    public ResponseMessage<TotalClassDTO> addTotalClass(@RequestBody TotalClass totalClass) {
         try {
             TotalClass savedTotalClass = classService.saveTotalClass(totalClass);
-            return ResponseMessage.success(savedTotalClass);
+            return ResponseMessage.success(DtoMapper.toDto(savedTotalClass));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -76,14 +80,14 @@ public class ClassController {
      */
     @PostMapping("/total/create")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<TotalClass> createTotalClass(
+    public ResponseMessage<TotalClassDTO> createTotalClass(
             @RequestParam String totalClassName,
             @RequestParam Integer majorId) {
         try {
-            var major = majorService.findById(majorId)
+            var major = majorService.findEntityById(majorId)
                     .orElseThrow(() -> new IllegalArgumentException("专业不存在"));
             TotalClass totalClass = classService.createTotalClass(totalClassName, major);
-            return ResponseMessage.success(totalClass);
+            return ResponseMessage.success(DtoMapper.toDto(totalClass));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -98,13 +102,13 @@ public class ClassController {
      */
     @PutMapping("/total/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<TotalClass> updateTotalClass(
+    public ResponseMessage<TotalClassDTO> updateTotalClass(
             @PathVariable Integer id, 
             @RequestBody TotalClass totalClass) {
         try {
             // 这里需要实现updateTotalClass方法，暂时使用save
             TotalClass updatedTotalClass = classService.saveTotalClass(totalClass);
-            return ResponseMessage.success(updatedTotalClass);
+            return ResponseMessage.success(DtoMapper.toDto(updatedTotalClass));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -131,9 +135,9 @@ public class ClassController {
      */
     @GetMapping("/total/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<TotalClass> getTotalClassById(@PathVariable Integer id) {
+    public ResponseMessage<TotalClassDTO> getTotalClassById(@PathVariable Integer id) {
         Optional<TotalClass> totalClass = classService.findTotalClassById(id);
-        return totalClass.map(ResponseMessage::success)
+        return totalClass.map(t -> ResponseMessage.success(DtoMapper.toDto(t)))
                 .orElse(ResponseMessage.error("总班级不存在"));
     }
 
@@ -144,9 +148,9 @@ public class ClassController {
      */
     @GetMapping("/total")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<TotalClass>> getAllTotalClasses() {
+    public ResponseMessage<List<TotalClassDTO>> getAllTotalClasses() {
         List<TotalClass> totalClasses = classService.findAllTotalClasses();
-        return ResponseMessage.success(totalClasses);
+        return ResponseMessage.success(totalClasses.stream().map(DtoMapper::toDto).toList());
     }
 
     /**
@@ -160,7 +164,7 @@ public class ClassController {
      */
     @GetMapping("/total/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<TotalClass>> getTotalClassesByPage(
+    public ResponseMessage<Page<TotalClassDTO>> getTotalClassesByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "totalClassId") String sortBy,
@@ -171,7 +175,8 @@ public class ClassController {
         
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<TotalClass> totalClasses = classService.findAllTotalClasses(pageable);
-        return ResponseMessage.success(totalClasses);
+        Page<TotalClassDTO> dtoPage = totalClasses.map(DtoMapper::toDto);
+        return ResponseMessage.success(dtoPage);
     }
 
     /**
@@ -182,9 +187,9 @@ public class ClassController {
      */
     @GetMapping("/total/major/{majorId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<TotalClass>> getTotalClassesByMajor(@PathVariable Integer majorId) {
+    public ResponseMessage<List<TotalClassDTO>> getTotalClassesByMajor(@PathVariable Integer majorId) {
         List<TotalClass> totalClasses = classService.findTotalClassesByMajorId(majorId);
-        return ResponseMessage.success(totalClasses);
+        return ResponseMessage.success(totalClasses.stream().map(DtoMapper::toDto).toList());
     }
 
     /**
@@ -195,9 +200,9 @@ public class ClassController {
      */
     @GetMapping("/total/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<TotalClass>> searchTotalClasses(@RequestParam String name) {
+    public ResponseMessage<List<TotalClassDTO>> searchTotalClasses(@RequestParam String name) {
         List<TotalClass> totalClasses = classService.findByTotalClassNameContaining(name);
-        return ResponseMessage.success(totalClasses);
+        return ResponseMessage.success(totalClasses.stream().map(DtoMapper::toDto).toList());
     }
 
     /**
@@ -209,14 +214,14 @@ public class ClassController {
      */
     @GetMapping("/total/name/{totalClassName}/major/{majorId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<TotalClass> getTotalClassByNameAndMajor(
+    public ResponseMessage<TotalClassDTO> getTotalClassByNameAndMajor(
             @PathVariable String totalClassName,
             @PathVariable Integer majorId) {
         try {
-            var major = majorService.findById(majorId)
+            var major = majorService.findEntityById(majorId)
                     .orElseThrow(() -> new IllegalArgumentException("专业不存在"));
             Optional<TotalClass> totalClass = classService.findByTotalClassNameAndMajor(totalClassName, major);
-            return totalClass.map(ResponseMessage::success)
+            return totalClass.map(t -> ResponseMessage.success(DtoMapper.toDto(t)))
                     .orElse(ResponseMessage.error("总班级不存在"));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
@@ -233,10 +238,10 @@ public class ClassController {
      */
     @PostMapping("/sub")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<SubClass> addSubClass(@RequestBody SubClass subClass) {
+    public ResponseMessage<SubClassDTO> addSubClass(@RequestBody SubClassDTO subClass) {
         try {
-            SubClass savedSubClass = classService.saveSubClass(subClass);
-            return ResponseMessage.success(savedSubClass);
+            SubClass savedSubClass = classService.saveSubClassDTO(subClass);
+            return ResponseMessage.success(DtoMapper.toDto(savedSubClass));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -251,14 +256,14 @@ public class ClassController {
      */
     @PostMapping("/sub/create")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<SubClass> createSubClass(
+    public ResponseMessage<SubClassDTO> createSubClass(
             @RequestParam String subClassName,
             @RequestParam Integer totalClassId) {
         try {
             var totalClass = classService.findTotalClassById(totalClassId)
                     .orElseThrow(() -> new IllegalArgumentException("总班级不存在"));
             SubClass subClass = classService.createSubClass(subClassName, totalClass);
-            return ResponseMessage.success(subClass);
+            return ResponseMessage.success(DtoMapper.toDto(subClass));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -273,13 +278,13 @@ public class ClassController {
      */
     @PutMapping("/sub/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<SubClass> updateSubClass(
+    public ResponseMessage<SubClassDTO> updateSubClass(
             @PathVariable Integer id, 
             @RequestBody SubClass subClass) {
         try {
             // 这里需要实现updateSubClass方法，暂时使用save
             SubClass updatedSubClass = classService.saveSubClass(subClass);
-            return ResponseMessage.success(updatedSubClass);
+            return ResponseMessage.success(DtoMapper.toDto(updatedSubClass));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -306,9 +311,9 @@ public class ClassController {
      */
     @GetMapping("/sub/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<SubClass> getSubClassById(@PathVariable Integer id) {
+    public ResponseMessage<SubClassDTO> getSubClassById(@PathVariable Integer id) {
         Optional<SubClass> subClass = classService.findSubClassById(id);
-        return subClass.map(ResponseMessage::success)
+        return subClass.map(s -> ResponseMessage.success(DtoMapper.toDto(s)))
                 .orElse(ResponseMessage.error("子班级不存在"));
     }
 
@@ -319,9 +324,9 @@ public class ClassController {
      */
     @GetMapping("/sub")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<SubClass>> getAllSubClasses() {
+    public ResponseMessage<List<SubClassDTO>> getAllSubClasses() {
         List<SubClass> subClasses = classService.findAllSubClasses();
-        return ResponseMessage.success(subClasses);
+        return ResponseMessage.success(subClasses.stream().map(DtoMapper::toDto).toList());
     }
 
     /**
@@ -335,7 +340,7 @@ public class ClassController {
      */
     @GetMapping("/sub/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<SubClass>> getSubClassesByPage(
+    public ResponseMessage<Page<SubClassDTO>> getSubClassesByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "subClassId") String sortBy,
@@ -346,7 +351,8 @@ public class ClassController {
         
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<SubClass> subClasses = classService.findAllSubClasses(pageable);
-        return ResponseMessage.success(subClasses);
+        Page<SubClassDTO> dtoPage = subClasses.map(DtoMapper::toDto);
+        return ResponseMessage.success(dtoPage);
     }
 
     /**
@@ -357,9 +363,9 @@ public class ClassController {
      */
     @GetMapping("/sub/total/{totalClassId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<SubClass>> getSubClassesByTotalClass(@PathVariable Integer totalClassId) {
+    public ResponseMessage<List<SubClassDTO>> getSubClassesByTotalClass(@PathVariable Integer totalClassId) {
         List<SubClass> subClasses = classService.findSubClassesByTotalClassId(totalClassId);
-        return ResponseMessage.success(subClasses);
+        return ResponseMessage.success(subClasses.stream().map(DtoMapper::toDto).toList());
     }
 
     /**
@@ -370,9 +376,9 @@ public class ClassController {
      */
     @GetMapping("/sub/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<SubClass>> searchSubClasses(@RequestParam String name) {
+    public ResponseMessage<List<SubClassDTO>> searchSubClasses(@RequestParam String name) {
         List<SubClass> subClasses = classService.findBySubClassNameContaining(name);
-        return ResponseMessage.success(subClasses);
+        return ResponseMessage.success(subClasses.stream().map(DtoMapper::toDto).toList());
     }
 
     /**
@@ -384,14 +390,14 @@ public class ClassController {
      */
     @GetMapping("/sub/name/{subClassName}/total/{totalClassId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<SubClass> getSubClassByNameAndTotalClass(
+    public ResponseMessage<SubClassDTO> getSubClassByNameAndTotalClass(
             @PathVariable String subClassName,
             @PathVariable Integer totalClassId) {
         try {
             var totalClass = classService.findTotalClassById(totalClassId)
                     .orElseThrow(() -> new IllegalArgumentException("总班级不存在"));
             Optional<SubClass> subClass = classService.findBySubClassNameAndTotalClass(subClassName, totalClass);
-            return subClass.map(ResponseMessage::success)
+            return subClass.map(s -> ResponseMessage.success(DtoMapper.toDto(s)))
                     .orElse(ResponseMessage.error("子班级不存在"));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
@@ -413,7 +419,7 @@ public class ClassController {
             @RequestParam String totalClassName,
             @RequestParam Integer majorId) {
         try {
-            var major = majorService.findById(majorId)
+            var major = majorService.findEntityById(majorId)
                     .orElseThrow(() -> new IllegalArgumentException("专业不存在"));
             boolean exists = classService.existsByTotalClassNameAndMajor(totalClassName, major);
             return ResponseMessage.success(exists);
@@ -452,9 +458,9 @@ public class ClassController {
      */
     @GetMapping("/total/search/general")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<TotalClass>> searchTotalClassesGeneral(@RequestParam String keyword) {
+    public ResponseMessage<List<TotalClassDTO>> searchTotalClassesGeneral(@RequestParam String keyword) {
         List<TotalClass> totalClasses = classService.searchTotalClasses(keyword);
-        return ResponseMessage.success(totalClasses);
+        return ResponseMessage.success(totalClasses.stream().map(DtoMapper::toDto).toList());
     }
 
     /**
@@ -465,8 +471,8 @@ public class ClassController {
      */
     @GetMapping("/sub/search/general")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<SubClass>> searchSubClassesGeneral(@RequestParam String keyword) {
+    public ResponseMessage<List<SubClassDTO>> searchSubClassesGeneral(@RequestParam String keyword) {
         List<SubClass> subClasses = classService.searchSubClasses(keyword);
-        return ResponseMessage.success(subClasses);
+        return ResponseMessage.success(subClasses.stream().map(DtoMapper::toDto).toList());
     }
 }

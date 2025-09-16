@@ -2,6 +2,7 @@ package com.jamesliu.stumanagement.student_management.Service.MajorService;
 
 import com.jamesliu.stumanagement.student_management.Entity.Student.Academy;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Major;
+import com.jamesliu.stumanagement.student_management.dto.MajorDTO;
 import com.jamesliu.stumanagement.student_management.Entity.Teacher.Teacher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,26 +31,26 @@ public interface IMajorService {
     
     // 基础 CRUD 操作
     Major saveMajor(Major major);
-    Optional<Major> findById(Integer id);
-    List<Major> findAll();
-    Page<Major> findAll(Pageable pageable);
+    Optional<MajorDTO> findById(Integer id);
+    List<MajorDTO> findAll();
+    Page<MajorDTO> findAll(Pageable pageable);
     void deleteById(Integer id);
     void deleteMajor(Major major);
     
     // 查询操作
-    List<Major> findByAcademy(Academy academy);
-    List<Major> findByGrade(Integer grade);
-    List<Major> findByCounselor(Teacher counselor);
-    List<Major> findByMajorNameContaining(String name);
-    List<Major> findByAcademyAndGrade(Academy academy, Integer grade);
-    List<Major> findByAcademyAndMajorNameContaining(Academy academy, String name);
-    Optional<Major> findByMajorNameAndGrade(String majorName, Integer grade);
+    List<MajorDTO> findByAcademy(Academy academy);
+    List<MajorDTO> findByGrade(Integer grade);
+    List<MajorDTO> findByCounselor(Teacher counselor);
+    List<MajorDTO> findByMajorNameContaining(String name);
+    List<MajorDTO> findByAcademyAndGrade(Academy academy, Integer grade);
+    List<MajorDTO> findByAcademyAndMajorNameContaining(Academy academy, String name);
+    Optional<MajorDTO> findByMajorNameAndGrade(String majorName, Integer grade);
     
     // 分页查询
-    Page<Major> findByAcademy(Academy academy, Pageable pageable);
-    Page<Major> findByGrade(Integer grade, Pageable pageable);
-    Page<Major> findByCounselor(Teacher counselor, Pageable pageable);
-    Page<Major> findByMajorNameContaining(String name, Pageable pageable);
+    Page<MajorDTO> findByAcademy(Academy academy, Pageable pageable);
+    Page<MajorDTO> findByGrade(Integer grade, Pageable pageable);
+    Page<MajorDTO> findByCounselor(Teacher counselor, Pageable pageable);
+    Page<MajorDTO> findByMajorNameContaining(String name, Pageable pageable);
     
     // 统计操作
     long countByAcademy(Academy academy);
@@ -61,7 +62,10 @@ public interface IMajorService {
     boolean existsByMajorNameAndGrade(String majorName, Integer grade);
     Major createMajor(String majorName, Academy academy, Integer grade, Teacher counselor);
     Major updateMajor(Integer id, String majorName, Academy academy, Integer grade, Teacher counselor);
-    List<Major> searchMajors(String keyword);
-    List<Major> getMajorsByAcademyId(Integer academyId);
-    List<Major> getMajorsByGrade(Integer grade);
+    List<MajorDTO> searchMajors(String keyword);
+    List<MajorDTO> getMajorsByAcademyId(Integer academyId);
+    List<MajorDTO> getMajorsByGrade(Integer grade);
+
+    // 内部使用：需要实体的场景（如班级创建依赖Major实体）
+    Optional<Major> findEntityById(Integer id);
 }

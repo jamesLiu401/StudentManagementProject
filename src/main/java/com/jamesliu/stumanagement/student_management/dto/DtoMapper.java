@@ -4,6 +4,7 @@ import com.jamesliu.stumanagement.student_management.Entity.Student.Major;
 import com.jamesliu.stumanagement.student_management.Entity.Student.TotalClass;
 import com.jamesliu.stumanagement.student_management.Entity.Student.SubClass;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Student;
+import com.jamesliu.stumanagement.student_management.Entity.Student.Subject;
 import com.jamesliu.stumanagement.student_management.Entity.Teacher.Teacher;
 import com.jamesliu.stumanagement.student_management.Entity.Finance.Payment;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Score;
@@ -107,7 +108,8 @@ public class DtoMapper {
         if (entity.getSubject() != null) {
             dto.setSubjectId(Math.toIntExact(entity.getSubject().getSubjectId()));
             dto.setSubjectName(entity.getSubject().getSubjectName());
-            dto.setAcademy(entity.getSubject().getSubjectAcademy());
+            dto.setAcademyId(entity.getSubject().getAcademy() != null ? entity.getSubject().getAcademy().getAcademyId() : null);
+            dto.setAcademyName(entity.getSubject().getAcademy() != null ? entity.getSubject().getAcademy().getAcademyName() : null);
             dto.setCredit(entity.getSubject().getCredit());
         }
         
@@ -160,6 +162,17 @@ public class DtoMapper {
         dto.setDeanName(entity.getDeanName());
         dto.setContactPhone(entity.getContactPhone());
         dto.setAddress(entity.getAddress());
+        return dto;
+    }
+
+    public static SubjectDTO toDto(Subject entity) {
+        if (entity == null) return null;
+        SubjectDTO dto = new SubjectDTO();
+        dto.setSubjectId(entity.getSubjectId());
+        dto.setSubjectName(entity.getSubjectName());
+        dto.setAcademyId(entity.getAcademy() != null ? entity.getAcademy().getAcademyId() : null);
+        dto.setAcademyName(entity.getAcademy() != null ? entity.getAcademy().getAcademyName() : null);
+        dto.setCredit(entity.getCredit());
         return dto;
     }
 }

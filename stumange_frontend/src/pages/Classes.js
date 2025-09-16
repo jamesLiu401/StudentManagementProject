@@ -27,6 +27,9 @@ const Classes = () => {
     const [editing, setEditing] = useState(null);
     const [isEditingTotal, setIsEditingTotal] = useState(true);
     const [formData, setFormData] = useState({ totalClassName: '', majorId: '', subClassName: '', totalClassId: '' });
+    const [confirmTotalId, setConfirmTotalId] = useState(null);
+    const [confirmSubId, setConfirmSubId] = useState(null);
+    const [deleting, setDeleting] = useState(false);
 
     const loadTotals = async () => {
         try {
@@ -76,24 +79,32 @@ const Classes = () => {
     useEffect(() => { loadSubs(); }, [subsPage]);
 
     const handleDeleteTotal = async (id) => {
-        if (!isAdmin() || !window.confirm('确定要删除这个总班级吗？')) return;
+        if (!isAdmin()) return;
         try {
+            setDeleting(true);
             await classApi.deleteTotalClass(id);
-            loadTotals();
+            await loadTotals();
         } catch (err) {
             console.error('删除总班级失败:', err);
             setTotalsError('删除总班级失败，请稍后重试');
+        } finally {
+            setDeleting(false);
+            setConfirmTotalId(null);
         }
     };
 
     const handleDeleteSub = async (id) => {
-        if (!isAdmin() || !window.confirm('确定要删除这个子班级吗？')) return;
+        if (!isAdmin()) return;
         try {
+            setDeleting(true);
             await classApi.deleteSubClass(id);
-            loadSubs();
+            await loadSubs();
         } catch (err) {
             console.error('删除子班级失败:', err);
             setSubsError('删除子班级失败，请稍后重试');
+        } finally {
+            setDeleting(false);
+            setConfirmSubId(null);
         }
     };
 
@@ -107,7 +118,7 @@ const Classes = () => {
     const openEditSub = (item) => {
         setIsEditingTotal(false);
         setEditing(item);
-        setFormData({ totalClassName: '', majorId: '', subClassName: item.subClassName || '', totalClassId: item.totalClassId || '' });
+        setFormData({ totalClassName: '', major: '', subClassName: item.subClassName || '', totalClass: item.totalClass || '' });
         setShowModal(true);
     };
 
@@ -121,7 +132,7 @@ const Classes = () => {
     const openCreateSub = () => {
         setIsEditingTotal(false);
         setEditing(null);
-        setFormData({ totalClassName: '', majorId: '', subClassName: '', totalClassId: '' });
+        setFormData({ totalClassName: '', majorId: '', subClassName: '', totalClass: '' });
         setShowModal(true);
     };
 
@@ -129,15 +140,17 @@ const Classes = () => {
         e.preventDefault();
         try {
             if (isEditingTotal) {
-                const payload = { totalClassName: formData.totalClassName, majorId: parseInt(formData.majorId || 0, 10) };
+                const majorIdNum = parseInt(formData.majorId || 0, 10);
                 if (editing) {
-                    await classApi.updateTotalClass(editing.totalClassId, payload);
+                    // 仍旧使用 body 更新，后端需要支持 TotalClass 结构或接受 DTO，如果失败再调整
+                    await classApi.updateTotalClass(editing.totalClassId, { totalClassName: formData.totalClassName, majorId: majorIdNum });
                 } else {
-                    await classApi.createTotalClass(payload);
+                    // 创建改为使用 params 形式，避免后端 JSON 解析错误
+                    await classApi.createTotalClassByParams(formData.totalClassName, majorIdNum);
                 }
                 loadTotals();
             } else {
-                const payload = { subClassName: formData.subClassName, totalClassId: parseInt(formData.totalClassId || 0, 10) };
+                const payload = { subClassName: formData.subClassName, totalClass: parseInt(formData.totalClass || 0, 10) };
                 if (editing) {
                     await classApi.updateSubClass(editing.subClassId, payload);
                 } else {
@@ -204,7 +217,7 @@ const Classes = () => {
                                     {isAdmin() && (
                                         <td>
                                             <Button variant="outline-primary" size="sm" className="me-2" onClick={() => openEditTotal(tc)}><i className="fas fa-edit"></i></Button>
-                                            <Button variant="outline-danger" size="sm" onClick={() => handleDeleteTotal(tc.totalClassId)}><i className="fas fa-trash"></i></Button>
+                                            <Button variant="outline-danger" size="sm" onClick={() => setConfirmTotalId(tc.totalClassId)}><i className="fas fa-trash"></i></Button>
                                         </td>
                                     )}
                                 </tr>
@@ -256,7 +269,7 @@ const Classes = () => {
                                     {isAdmin() && (
                                         <td>
                                             <Button variant="outline-primary" size="sm" className="me-2" onClick={() => openEditSub(sc)}><i className="fas fa-edit"></i></Button>
-                                            <Button variant="outline-danger" size="sm" onClick={() => handleDeleteSub(sc.subClassId)}><i className="fas fa-trash"></i></Button>
+                                            <Button variant="outline-danger" size="sm" onClick={() => setConfirmSubId(sc.subClassId)}><i className="fas fa-trash"></i></Button>
                                         </td>
                                     )}
                                 </tr>
@@ -315,6 +328,30 @@ const Classes = () => {
                         <Button variant="primary" type="submit">{editing ? '更新' : '添加'}</Button>
                     </Modal.Footer>
                 </Form>
+            </Modal>
+            <Modal show={confirmTotalId !== null} onHide={() => setConfirmTotalId(null)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>确认删除总班级</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>确定要删除该总班级吗？此操作不可恢复。</Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setConfirmTotalId(null)} disabled={deleting}>取消</Button>
+                    <Button variant="danger" onClick={() => handleDeleteTotal(confirmTotalId)} disabled={deleting}>
+                        {deleting ? '删除中...' : '删除'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+            <Modal show={confirmSubId !== null} onHide={() => setConfirmSubId(null)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>确认删除子班级</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>确定要删除该子班级吗？此操作不可恢复。</Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setConfirmSubId(null)} disabled={deleting}>取消</Button>
+                    <Button variant="danger" onClick={() => handleDeleteSub(confirmSubId)} disabled={deleting}>
+                        {deleting ? '删除中...' : '删除'}
+                    </Button>
+                </Modal.Footer>
             </Modal>
         </Container>
     );

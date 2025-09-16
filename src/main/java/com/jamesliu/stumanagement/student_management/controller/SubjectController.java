@@ -2,7 +2,10 @@ package com.jamesliu.stumanagement.student_management.controller;
 
 import com.jamesliu.stumanagement.student_management.Entity.ResponseMessage;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Subject;
+import com.jamesliu.stumanagement.student_management.Entity.Student.Academy;
+import com.jamesliu.stumanagement.student_management.dto.SubjectDTO;
 import com.jamesliu.stumanagement.student_management.Service.SubjectService.ISubjectService;
+import com.jamesliu.stumanagement.student_management.repository.StuRepo.AcademyRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,9 +41,11 @@ import java.util.Optional;
 public class SubjectController {
 
     private final ISubjectService subjectService;
+    private final AcademyRepository academyRepository;
 
-    public SubjectController(ISubjectService subjectService) {
+    public SubjectController(ISubjectService subjectService, AcademyRepository academyRepository) {
         this.subjectService = subjectService;
+        this.academyRepository = academyRepository;
     }
 
     /**
@@ -53,7 +58,7 @@ public class SubjectController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseMessage<Subject> addSubject(@RequestBody Subject subject) {
         try {
-            Subject savedSubject = subjectService.saveSubject(subject);
+            Subject savedSubject = subjectService.createSubject(subject);
             return ResponseMessage.success(savedSubject);
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
@@ -64,7 +69,7 @@ public class SubjectController {
      * 创建课程（通过参数）
      * 
      * @param subjectName 课程名称
-     * @param academy 学院
+     * @param academyId 学院ID
      * @param credit 学分
      * @return 创建的课程信息
      */
@@ -72,10 +77,14 @@ public class SubjectController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseMessage<Subject> createSubject(
             @RequestParam String subjectName,
-            @RequestParam String academy,
+            @RequestParam Integer academyId,
             @RequestParam Double credit) {
         try {
-            Subject subject = subjectService.createSubject(subjectName, academy, credit);
+            Optional<Academy> academy = academyRepository.findById(academyId);
+            if (academy.isEmpty()) {
+                return ResponseMessage.error("学院不存在");
+            }
+            Subject subject = subjectService.createSubject(subjectName, academy.get(), credit);
             return ResponseMessage.success(subject);
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
@@ -95,8 +104,18 @@ public class SubjectController {
             @PathVariable Long id, 
             @RequestBody Subject subject) {
         try {
+            // 需要根据academyId获取Academy实体
+            Academy academy = null;
+            if (subject.getAcademy() != null && subject.getAcademy().getAcademyId() != null) {
+                Optional<Academy> academyOpt = academyRepository.findById(subject.getAcademy().getAcademyId());
+                if (academyOpt.isEmpty()) {
+                    return ResponseMessage.error("学院不存在");
+                }
+                academy = academyOpt.get();
+            }
+            
             Subject updatedSubject = subjectService.updateSubject(id,
-                subject.getSubjectName(), subject.getSubjectAcademy(), subject.getCredit());
+                subject.getSubjectName(), academy, subject.getCredit());
             return ResponseMessage.success(updatedSubject);
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
@@ -124,8 +143,8 @@ public class SubjectController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Subject> getSubjectById(@PathVariable Long id) {
-        Optional<Subject> subject = subjectService.findById(id);
+    public ResponseMessage<SubjectDTO> getSubjectById(@PathVariable Long id) {
+        Optional<SubjectDTO> subject = subjectService.findById(id);
         return subject.map(ResponseMessage::success)
                 .orElse(ResponseMessage.error("课程不存在"));
     }
@@ -137,8 +156,8 @@ public class SubjectController {
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Subject>> getAllSubjects() {
-        List<Subject> subjects = subjectService.findAll();
+    public ResponseMessage<List<SubjectDTO>> getAllSubjects() {
+        List<SubjectDTO> subjects = subjectService.findAll();
         return ResponseMessage.success(subjects);
     }
 
@@ -153,7 +172,7 @@ public class SubjectController {
      */
     @GetMapping("/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Subject>> getSubjectsByPage(
+    public ResponseMessage<Page<SubjectDTO>> getSubjectsByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "subjectId") String sortBy,
@@ -163,47 +182,56 @@ public class SubjectController {
                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Subject> subjects = subjectService.findAll(pageable);
+        Page<SubjectDTO> subjects = subjectService.findAll(pageable);
         return ResponseMessage.success(subjects);
     }
 
     /**
      * 根据学院查询课程
      * 
-     * @param academy 学院名称
+     * @param academyId 学院ID
      * @return 该学院下的课程列表
      */
-    @GetMapping("/academy/{academy}")
+    @GetMapping("/academy/{academyId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Subject>> getSubjectsByAcademy(@PathVariable String academy) {
-        List<Subject> subjects = subjectService.findByAcademy(academy);
+    public ResponseMessage<List<SubjectDTO>> getSubjectsByAcademy(@PathVariable Integer academyId) {
+        Optional<Academy> academy = academyRepository.findById(academyId);
+        if (academy.isEmpty()) {
+            return ResponseMessage.error("学院不存在");
+        }
+        List<SubjectDTO> subjects = subjectService.findByAcademy(academy.get());
         return ResponseMessage.success(subjects);
     }
 
     /**
      * 根据学院分页查询课程
      * 
-     * @param academy 学院名称
+     * @param academyId 学院ID
      * @param page 页码
      * @param size 每页大小
      * @param sortBy 排序字段
      * @param sortDir 排序方向
      * @return 分页的课程列表
      */
-    @GetMapping("/academy/{academy}/page")
+    @GetMapping("/academy/{academyId}/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Subject>> getSubjectsByAcademyPage(
-            @PathVariable String academy,
+    public ResponseMessage<Page<SubjectDTO>> getSubjectsByAcademyPage(
+            @PathVariable Integer academyId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "subjectId") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
         
+        Optional<Academy> academy = academyRepository.findById(academyId);
+        if (academy.isEmpty()) {
+            return ResponseMessage.error("学院不存在");
+        }
+        
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? 
                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Subject> subjects = subjectService.findByAcademy(academy, pageable);
+        Page<SubjectDTO> subjects = subjectService.findByAcademy(academy.get(), pageable);
         return ResponseMessage.success(subjects);
     }
 
@@ -215,8 +243,8 @@ public class SubjectController {
      */
     @GetMapping("/search/name")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Subject>> searchSubjectsByName(@RequestParam String name) {
-        List<Subject> subjects = subjectService.findBySubjectNameContaining(name);
+    public ResponseMessage<List<SubjectDTO>> searchSubjectsByName(@RequestParam String name) {
+        List<SubjectDTO> subjects = subjectService.findBySubjectNameContaining(name);
         return ResponseMessage.success(subjects);
     }
 
@@ -232,7 +260,7 @@ public class SubjectController {
      */
     @GetMapping("/search/name/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Subject>> searchSubjectsByNamePage(
+    public ResponseMessage<Page<SubjectDTO>> searchSubjectsByNamePage(
             @RequestParam String name,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -243,7 +271,7 @@ public class SubjectController {
                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Subject> subjects = subjectService.findBySubjectNameContaining(name, pageable);
+        Page<SubjectDTO> subjects = subjectService.findBySubjectNameContaining(name, pageable);
         return ResponseMessage.success(subjects);
     }
 
@@ -255,8 +283,8 @@ public class SubjectController {
      */
     @GetMapping("/name/{subjectName}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Subject> getSubjectByName(@PathVariable String subjectName) {
-        Optional<Subject> subject = subjectService.findBySubjectName(subjectName);
+    public ResponseMessage<SubjectDTO> getSubjectByName(@PathVariable String subjectName) {
+        Optional<SubjectDTO> subject = subjectService.findBySubjectName(subjectName);
         return subject.map(ResponseMessage::success)
                 .orElse(ResponseMessage.error("课程不存在"));
     }
@@ -264,16 +292,20 @@ public class SubjectController {
     /**
      * 根据学院和课程名称查询
      * 
-     * @param academy 学院名称
+     * @param academyId 学院名称
      * @param subjectName 课程名称
      * @return 课程信息
      */
-    @GetMapping("/academy/{academy}/name/{subjectName}")
+    @GetMapping("/academy/{academyId}/name/{subjectName}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Subject> getSubjectByAcademyAndName(
-            @PathVariable String academy,
+    public ResponseMessage<SubjectDTO> getSubjectByAcademyAndName(
+            @PathVariable Integer academyId,
             @PathVariable String subjectName) {
-        Optional<Subject> subject = subjectService.findByAcademyAndSubjectName(academy, subjectName);
+        Optional<Academy> academy = academyRepository.findById(academyId);
+        if (academy.isEmpty()) {
+            return ResponseMessage.error("学院不存在");
+        }
+        Optional<SubjectDTO> subject = subjectService.findByAcademyAndSubjectName(academy.get(), subjectName);
         return subject.map(ResponseMessage::success)
                 .orElse(ResponseMessage.error("课程不存在"));
     }
@@ -286,8 +318,8 @@ public class SubjectController {
      */
     @GetMapping("/credit/{credit}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Subject>> getSubjectsByCredit(@PathVariable Double credit) {
-        List<Subject> subjects = subjectService.findByCredit(credit);
+    public ResponseMessage<List<SubjectDTO>> getSubjectsByCredit(@PathVariable Double credit) {
+        List<SubjectDTO> subjects = subjectService.findByCredit(credit);
         return ResponseMessage.success(subjects);
     }
 
@@ -303,7 +335,7 @@ public class SubjectController {
      */
     @GetMapping("/credit/{credit}/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Subject>> getSubjectsByCreditPage(
+    public ResponseMessage<Page<SubjectDTO>> getSubjectsByCreditPage(
             @PathVariable Double credit,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -314,7 +346,7 @@ public class SubjectController {
                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Subject> subjects = subjectService.findByCredit(credit, pageable);
+        Page<SubjectDTO> subjects = subjectService.findByCredit(credit, pageable);
         return ResponseMessage.success(subjects);
     }
 
@@ -327,10 +359,10 @@ public class SubjectController {
      */
     @GetMapping("/credit-range")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Subject>> getSubjectsByCreditRange(
+    public ResponseMessage<List<SubjectDTO>> getSubjectsByCreditRange(
             @RequestParam Double minCredit,
             @RequestParam Double maxCredit) {
-        List<Subject> subjects = subjectService.findByCreditBetween(minCredit, maxCredit);
+        List<SubjectDTO> subjects = subjectService.findByCreditBetween(minCredit, maxCredit);
         return ResponseMessage.success(subjects);
     }
 
@@ -347,7 +379,7 @@ public class SubjectController {
      */
     @GetMapping("/credit-range/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Subject>> getSubjectsByCreditRangePage(
+    public ResponseMessage<Page<SubjectDTO>> getSubjectsByCreditRangePage(
             @RequestParam Double minCredit,
             @RequestParam Double maxCredit,
             @RequestParam(defaultValue = "0") int page,
@@ -359,48 +391,56 @@ public class SubjectController {
                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Subject> subjects = subjectService.findByCreditBetween(minCredit, maxCredit, pageable);
+        Page<SubjectDTO> subjects = subjectService.findByCreditBetween(minCredit, maxCredit, pageable);
         return ResponseMessage.success(subjects);
     }
 
     /**
      * 根据学院和学分查询课程
      * 
-     * @param academy 学院名称
+     * @param academyId 学院名称
      * @param credit 学分
      * @return 该学院和学分的课程列表
      */
-    @GetMapping("/academy/{academy}/credit/{credit}")
+    @GetMapping("/academy/{academyId}/credit/{credit}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Subject>> getSubjectsByAcademyAndCredit(
-            @PathVariable String academy,
+    public ResponseMessage<List<SubjectDTO>> getSubjectsByAcademyAndCredit(
+            @PathVariable Integer academyId,
             @PathVariable Double credit) {
-        List<Subject> subjects = subjectService.findByAcademyAndCredit(academy, credit);
+        Optional<Academy> academy = academyRepository.findById(academyId);
+        if (academy.isEmpty()) {
+            return ResponseMessage.error("学院不存在");
+        }
+        List<SubjectDTO> subjects = subjectService.findByAcademyAndCredit(academy.get(), credit);
         return ResponseMessage.success(subjects);
     }
 
     /**
      * 根据学院和学分范围查询课程
      * 
-     * @param academy 学院名称
+     * @param academyId 学院名称
      * @param minCredit 最小学分
      * @param maxCredit 最大学分
      * @return 该学院和学分范围的课程列表
      */
-    @GetMapping("/academy/{academy}/credit-range")
+    @GetMapping("/academy/{academyId}/credit-range")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Subject>> getSubjectsByAcademyAndCreditRange(
-            @PathVariable String academy,
+    public ResponseMessage<List<SubjectDTO>> getSubjectsByAcademyAndCreditRange(
+            @PathVariable Integer academyId,
             @RequestParam Double minCredit,
             @RequestParam Double maxCredit) {
-        List<Subject> subjects = subjectService.findByAcademyAndCreditBetween(academy, minCredit, maxCredit);
+        Optional<Academy> academy = academyRepository.findById(academyId);
+        if (academy.isEmpty()) {
+            return ResponseMessage.error("学院不存在");
+        }
+        List<SubjectDTO> subjects = subjectService.findByAcademyAndCreditBetween(academy.get(), minCredit, maxCredit);
         return ResponseMessage.success(subjects);
     }
 
     /**
      * 多条件查询课程
      * 
-     * @param academy 学院名称（可选）
+     * @param academyId 学院名称（可选）
      * @param subjectName 课程名称关键字（可选）
      * @param minCredit 最小学分（可选）
      * @param maxCredit 最大学分（可选）
@@ -408,19 +448,27 @@ public class SubjectController {
      */
     @GetMapping("/search/multiple")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Subject>> searchSubjectsByMultipleConditions(
-            @RequestParam(required = false) String academy,
+    public ResponseMessage<List<SubjectDTO>> searchSubjectsByMultipleConditions(
+            @RequestParam(required = false) Integer academyId,
             @RequestParam(required = false) String subjectName,
             @RequestParam(required = false) Double minCredit,
             @RequestParam(required = false) Double maxCredit) {
-        List<Subject> subjects = subjectService.findByMultipleConditions(academy, subjectName, minCredit, maxCredit);
+        Academy academy = null;
+        if (academyId != null) {
+            Optional<Academy> academyOpt = academyRepository.findById(academyId);
+            if (academyOpt.isEmpty()) {
+                return ResponseMessage.error("学院不存在");
+            }
+            academy = academyOpt.get();
+        }
+        List<SubjectDTO> subjects = subjectService.findByMultipleConditions(academy, subjectName, minCredit, maxCredit);
         return ResponseMessage.success(subjects);
     }
 
     /**
      * 多条件分页查询课程
      * 
-     * @param academy 学院名称（可选）
+     * @param academyId 学院名称（可选）
      * @param subjectName 课程名称关键字（可选）
      * @param minCredit 最小学分（可选）
      * @param maxCredit 最大学分（可选）
@@ -432,8 +480,8 @@ public class SubjectController {
      */
     @GetMapping("/search/multiple/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Subject>> searchSubjectsByMultipleConditionsPage(
-            @RequestParam(required = false) String academy,
+    public ResponseMessage<Page<SubjectDTO>> searchSubjectsByMultipleConditionsPage(
+            @RequestParam(required = false) Integer academyId,
             @RequestParam(required = false) String subjectName,
             @RequestParam(required = false) Double minCredit,
             @RequestParam(required = false) Double maxCredit,
@@ -446,7 +494,15 @@ public class SubjectController {
                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Subject> subjects = subjectService.findByMultipleConditions(academy, subjectName, minCredit, maxCredit, pageable);
+        Academy academy = null;
+        if (academyId != null) {
+            Optional<Academy> academyOpt = academyRepository.findById(academyId);
+            if (academyOpt.isEmpty()) {
+                return ResponseMessage.error("学院不存在");
+            }
+            academy = academyOpt.get();
+        }
+        Page<SubjectDTO> subjects = subjectService.findByMultipleConditions(academy, subjectName, minCredit, maxCredit, pageable);
         return ResponseMessage.success(subjects);
     }
 
@@ -458,16 +514,20 @@ public class SubjectController {
      */
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Subject>> searchSubjects(@RequestParam String keyword) {
-        List<Subject> subjects = subjectService.searchSubjects(keyword);
+    public ResponseMessage<List<SubjectDTO>> searchSubjects(@RequestParam String keyword) {
+        List<SubjectDTO> subjects = subjectService.searchSubjects(keyword);
         return ResponseMessage.success(subjects);
     }
 
     // 统计相关API
-    @GetMapping("/academy/{academy}/count")
+    @GetMapping("/academy/{academyId}/count")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Long> countSubjectsByAcademy(@PathVariable String academy) {
-        long count = subjectService.countByAcademy(academy);
+    public ResponseMessage<Long> countSubjectsByAcademy(@PathVariable Integer academyId) {
+        Optional<Academy> academy = academyRepository.findById(academyId);
+        if (academy.isEmpty()) {
+            return ResponseMessage.error("学院不存在");
+        }
+        long count = subjectService.countByAcademy(academy.get());
         return ResponseMessage.success(count);
     }
 
@@ -487,35 +547,47 @@ public class SubjectController {
         return ResponseMessage.success(count);
     }
 
-    @GetMapping("/academy/{academy}/credit-range/count")
+    @GetMapping("/academy/{academyId}/credit-range/count")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<Long> countSubjectsByAcademyAndCreditRange(
-            @PathVariable String academy,
+            @PathVariable Integer academyId,
             @RequestParam Double minCredit,
             @RequestParam Double maxCredit) {
-        long count = subjectService.countByAcademyAndCreditBetween(academy, minCredit, maxCredit);
+        Optional<Academy> academy = academyRepository.findById(academyId);
+        if (academy.isEmpty()) {
+            return ResponseMessage.error("学院不存在");
+        }
+        long count = subjectService.countByAcademyAndCreditBetween(academy.get(), minCredit, maxCredit);
         return ResponseMessage.success(count);
     }
 
     // 聚合操作API
-    @GetMapping("/academy/{academy}/total-credit")
+    @GetMapping("/academy/{academyId}/total-credit")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Double> getTotalCreditByAcademy(@PathVariable String academy) {
-        Double totalCredit = subjectService.sumCreditByAcademy(academy);
+    public ResponseMessage<Double> getTotalCreditByAcademy(@PathVariable Integer academyId) {
+        Optional<Academy> academy = academyRepository.findById(academyId);
+        if (academy.isEmpty()) {
+            return ResponseMessage.error("学院不存在");
+        }
+        Double totalCredit = subjectService.sumCreditByAcademy(academy.get());
         return ResponseMessage.success(totalCredit);
     }
 
     @GetMapping("/academies")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<String>> getAllAcademies() {
-        List<String> academies = subjectService.findAllAcademies();
+    public ResponseMessage<List<Academy>> getAllAcademies() {
+        List<Academy> academies = subjectService.findAllAcademies();
         return ResponseMessage.success(academies);
     }
 
-    @GetMapping("/academy/{academy}/credits")
+    @GetMapping("/academy/{academyId}/credits")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Double>> getCreditsByAcademy(@PathVariable String academy) {
-        List<Double> credits = subjectService.findCreditsByAcademy(academy);
+    public ResponseMessage<List<Double>> getCreditsByAcademy(@PathVariable Integer academyId) {
+        Optional<Academy> academy = academyRepository.findById(academyId);
+        if (academy.isEmpty()) {
+            return ResponseMessage.error("学院不存在");
+        }
+        List<Double> credits = subjectService.findCreditsByAcademy(academy.get());
         return ResponseMessage.success(credits);
     }
 
@@ -523,9 +595,13 @@ public class SubjectController {
     @GetMapping("/exists")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseMessage<Boolean> checkSubjectExists(
-            @RequestParam String academy,
+            @RequestParam Integer academyId,
             @RequestParam String subjectName) {
-        boolean exists = subjectService.existsByAcademyAndSubjectName(academy, subjectName);
+        Optional<Academy> academy = academyRepository.findById(academyId);
+        if (academy.isEmpty()) {
+            return ResponseMessage.error("学院不存在");
+        }
+        boolean exists = subjectService.existsByAcademyAndSubjectName(academy.get(), subjectName);
         return ResponseMessage.success(exists);
     }
 }

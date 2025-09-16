@@ -3,6 +3,7 @@ package com.jamesliu.stumanagement.student_management.Service.ClassService;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Major;
 import com.jamesliu.stumanagement.student_management.Entity.Student.SubClass;
 import com.jamesliu.stumanagement.student_management.Entity.Student.TotalClass;
+import com.jamesliu.stumanagement.student_management.dto.SubClassDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -43,6 +44,7 @@ public interface IClassService {
     
     // SubClass 相关操作
     SubClass saveSubClass(SubClass subClass);
+    SubClass saveSubClassDTO(SubClassDTO subClassDTO);
     Optional<SubClass> findSubClassById(Integer id);
     List<SubClass> findAllSubClasses();
     Page<SubClass> findAllSubClasses(Pageable pageable);

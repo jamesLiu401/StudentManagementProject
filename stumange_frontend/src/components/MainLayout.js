@@ -36,6 +36,8 @@ const MainLayout = () => {
         { path: '/academies', label: '学院管理', icon: '🏛️' },
         { path: '/majors', label: '专业管理', icon: '📚' },
         { path: '/classes', label: '班级管理', icon: '👥' },
+        { path: '/total-classes', label: '总班级管理', icon: '🏫' },
+        { path: '/sub-classes', label: '子班级管理', icon: '👥' },
         { path: '/subjects', label: '课程管理', icon: '📖' },
     ];
 

@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Card, Table, Button, Alert, Spinner, Pagination, Form, Modal, Row, Col } from 'react-bootstrap';
+import { Container, Card, Table, Button, Alert, Spinner, Pagination, Form, Row, Col, Badge, Modal } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContexts';
 import * as majorApi from '../api/major';
 import * as AcademyApi from '../api/academy';
 
 const Majors = () => {
+    const navigate = useNavigate();
     const { isAdmin } = useAuth();
     const [majors, setMajors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [confirmId, setConfirmId] = useState(null);
+    const [deleting, setDeleting] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const pageSize = 10;
-
-    const [showModal, setShowModal] = useState(false);
-    const [editing, setEditing] = useState(null);
-    const [formData, setFormData] = useState({ majorName: '', grade: '', academyId: '', counselorId: '' });
 
     // 学院名称缓存映射
     const [academyNameMap, setAcademyNameMap] = useState({});
@@ -105,7 +105,7 @@ const Majors = () => {
                     setAcademyNameMap(prev => ({ ...prev, ...updates }));
                 }
             } catch (e) {
-                // 已有全局 error 处理，不重复提示
+                // 已有全局 error 处理
             }
         };
         if (majors && majors.length > 0) {
@@ -119,57 +119,34 @@ const Majors = () => {
         loadMajors();
     };
 
+    const handleViewDetail = (majorId) => {
+        navigate(`/majors/${majorId}`);
+    };
+
+    const handleAdd = () => {
+        navigate('/majors/add');
+    };
+
+    const handleEdit = (majorId) => {
+        navigate(`/majors/edit/${majorId}`);
+    };
+
     const handleDelete = async (id) => {
-        if (!isAdmin() || !window.confirm('确定要删除这个专业吗？')) return;
         try {
-            await majorApi.deleteMajor(id);
-            loadMajors();
-        } catch (err) {
-            console.error('删除专业失败:', err);
-            setError('删除专业失败，请稍后重试');
-        }
-    };
-
-    const handleEdit = (item) => {
-        setEditing(item);
-        setFormData({
-            majorName: item.majorName || '',
-            grade: item.grade || '',
-            academyId: item.academyId || '',
-            counselorId: item.counselorId || '',
-        });
-        setShowModal(true);
-    };
-
-    const handleCreate = () => {
-        setEditing(null);
-        setFormData({ majorName: '', grade: '', academyId: '', counselorId: ''});
-        setShowModal(true);
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const gradeVal = parseInt(formData.grade.toString() || 0, 10);
-            const academyIdVal = formData.academyId !== '' ? parseInt(formData.academyId, 10) : null;
-            const counselorIdVal = formData.counselorId !== '' ? parseInt(formData.counselorId, 10) : null;
-            const payload = {
-                majorName: formData.majorName,
-                grade: Number.isNaN(gradeVal) ? 0 : gradeVal,
-                academy: academyIdVal ? { academyId: academyIdVal } : null,
-                counselor: counselorIdVal ? { teacherId: counselorIdVal } : null
-            };
-            if (editing) {
-                await majorApi.updateMajor(editing.majorId, payload);
+            setDeleting(true);
+            setError('');
+            const resp = await majorApi.deleteMajor(id);
+            if (resp && resp.status === 200) {
+                await loadMajors();
             } else {
-                await majorApi.createMajor(payload);
+                setError('删除失败');
             }
-            setShowModal(false);
-            setEditing(null);
-            loadMajors();
-        } catch (err) {
-            console.error('保存专业失败:', err);
-            setError('保存专业失败，请稍后重试');
+        } catch (e) {
+            console.error('删除失败:', e);
+            setError(e?.response?.data?.message || '删除失败，请稍后重试');
+        } finally {
+            setDeleting(false);
+            setConfirmId(null);
         }
     };
 
@@ -189,7 +166,7 @@ const Majors = () => {
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>专业管理</h2>
                 {isAdmin() && (
-                    <Button variant="primary" onClick={handleCreate}>
+                    <Button variant="primary" onClick={handleAdd}>
                         <i className="fas fa-plus me-2"></i>
                         添加专业
                     </Button>
@@ -287,7 +264,7 @@ const Majors = () => {
                                 <th>年级</th>
                                 <th>辅导员</th>
                                 <th>学院</th>
-                                {isAdmin() && <th>操作</th>}
+                                <th>操作</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -296,18 +273,37 @@ const Majors = () => {
                                     <td>{m.majorId}</td>
                                     <td>{m.majorName}</td>
                                     <td>{m.grade}</td>
-                                    <td>{m.counselorId || '-'}</td>
+                                    <td>{m.counselorId ? (<Badge bg="secondary">{m.counselorId}</Badge>) : '-'}</td>
                                     <td>{academyNameMap[m.academyId] || m.academyId || '-'}</td>
-                                    {isAdmin() && (
-                                        <td>
-                                            <Button variant="outline-primary" size="sm" className="me-2" onClick={() => handleEdit(m)}>
+                                    <td>
+                                        <Button
+                                            variant="outline-info"
+                                            size="sm"
+                                            className="me-2"
+                                            onClick={() => handleViewDetail(m.majorId)}
+                                        >
+                                            <i className="fas fa-eye"></i>
+                                        </Button>
+                                        {isAdmin() && (
+                                            <Button
+                                                variant="outline-warning"
+                                                size="sm"
+                                                className="me-2"
+                                                onClick={() => handleEdit(m.majorId)}
+                                            >
                                                 <i className="fas fa-edit"></i>
                                             </Button>
-                                            <Button variant="outline-danger" size="sm" onClick={() => handleDelete(m.majorId)}>
+                                        )}
+                                        {isAdmin() && (
+                                            <Button
+                                                variant="outline-danger"
+                                                size="sm"
+                                                onClick={() => setConfirmId(m.majorId)}
+                                            >
                                                 <i className="fas fa-trash"></i>
                                             </Button>
-                                        </td>
-                                    )}
+                                        )}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -328,59 +324,19 @@ const Majors = () => {
                     )}
                 </Card.Body>
             </Card>
-
-            <Modal show={showModal} onHide={() => setShowModal(false)}>
-                <Form onSubmit={handleSubmit}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>{editing ? '编辑专业' : '添加专业'}</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Row>
-                            <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>专业名称 *</Form.Label>
-                                    <Form.Control
-                                        type="text"
-                                        value={formData.majorName}
-                                        onChange={(e) => setFormData({ ...formData, majorName: e.target.value })}
-                                        required
-                                    />
-                                </Form.Group>
-                            </Col>
-                            <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>年级 *</Form.Label>
-                                    <Form.Control
-                                        type="number"
-                                        value={formData.grade}
-                                        onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                                        required
-                                    />
-                                </Form.Group>
-                            </Col>
-                        </Row>
-                        <Form.Group className="mb-3">
-                            <Form.Label>学院ID</Form.Label>
-                            <Form.Control
-                                type="number"
-                                value={formData.academyId}
-                                onChange={(e) => setFormData({ ...formData, academyId: e.target.value })}
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>辅导员ID</Form.Label>
-                            <Form.Control
-                                type="number"
-                                value={formData.counselorId}
-                                onChange={(e) => setFormData({ ...formData, counselorId: e.target.value })}
-                            />
-                        </Form.Group>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowModal(false)}>取消</Button>
-                        <Button variant="primary" type="submit">{editing ? '更新' : '添加'}</Button>
-                    </Modal.Footer>
-                </Form>
+            <Modal show={confirmId !== null} onHide={() => setConfirmId(null)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>确认删除</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    确定要删除该专业吗？此操作不可恢复。
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setConfirmId(null)} disabled={deleting}>取消</Button>
+                    <Button variant="danger" onClick={() => handleDelete(confirmId)} disabled={deleting}>
+                        {deleting ? '删除中...' : '删除'}
+                    </Button>
+                </Modal.Footer>
             </Modal>
         </Container>
     );

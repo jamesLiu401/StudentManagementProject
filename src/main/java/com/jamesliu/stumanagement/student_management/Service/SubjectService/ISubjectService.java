@@ -1,6 +1,8 @@
 package com.jamesliu.stumanagement.student_management.Service.SubjectService;
 
 import com.jamesliu.stumanagement.student_management.Entity.Student.Subject;
+import com.jamesliu.stumanagement.student_management.Entity.Student.Academy;
+import com.jamesliu.stumanagement.student_management.dto.SubjectDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -37,47 +39,50 @@ public interface ISubjectService {
     
     // 基础 CRUD 操作
     Subject saveSubject(Subject subject);
-    Optional<Subject> findById(Long id);
-    List<Subject> findAll();
-    Page<Subject> findAll(Pageable pageable);
+    Optional<SubjectDTO> findById(Long id);
+    List<SubjectDTO> findAll();
+    Page<SubjectDTO> findAll(Pageable pageable);
     void deleteById(Long id);
     void deleteSubject(Subject subject);
     
+    // 内部方法，返回实体
+    Optional<Subject> findEntityById(Long id);
+    
     // 查询操作
-    List<Subject> findByAcademy(String academy);
-    List<Subject> findBySubjectNameContaining(String name);
-    Optional<Subject> findBySubjectName(String subjectName);
-    Optional<Subject> findByAcademyAndSubjectName(String academy, String subjectName);
-    List<Subject> findByCredit(Double credit);
-    List<Subject> findByCreditBetween(Double minCredit, Double maxCredit);
-    List<Subject> findByAcademyAndCredit(String academy, Double credit);
-    List<Subject> findByAcademyAndCreditBetween(String academy, Double minCredit, Double maxCredit);
+    List<SubjectDTO> findByAcademy(Academy academy);
+    List<SubjectDTO> findBySubjectNameContaining(String name);
+    Optional<SubjectDTO> findBySubjectName(String subjectName);
+    Optional<SubjectDTO> findByAcademyAndSubjectName(Academy academy, String subjectName);
+    List<SubjectDTO> findByCredit(Double credit);
+    List<SubjectDTO> findByCreditBetween(Double minCredit, Double maxCredit);
+    List<SubjectDTO> findByAcademyAndCredit(Academy academy, Double credit);
+    List<SubjectDTO> findByAcademyAndCreditBetween(Academy academy, Double minCredit, Double maxCredit);
     
     // 分页查询
-    Page<Subject> findByAcademy(String academy, Pageable pageable);
-    Page<Subject> findBySubjectNameContaining(String name, Pageable pageable);
-    Page<Subject> findByCredit(Double credit, Pageable pageable);
-    Page<Subject> findByCreditBetween(Double minCredit, Double maxCredit, Pageable pageable);
+    Page<SubjectDTO> findByAcademy(Academy academy, Pageable pageable);
+    Page<SubjectDTO> findBySubjectNameContaining(String name, Pageable pageable);
+    Page<SubjectDTO> findByCredit(Double credit, Pageable pageable);
+    Page<SubjectDTO> findByCreditBetween(Double minCredit, Double maxCredit, Pageable pageable);
     
     // 多条件查询
-    List<Subject> findByMultipleConditions(String academy, String subjectName, Double minCredit, Double maxCredit);
-    Page<Subject> findByMultipleConditions(String academy, String subjectName, Double minCredit, Double maxCredit, Pageable pageable);
+    List<SubjectDTO> findByMultipleConditions(Academy academy, String subjectName, Double minCredit, Double maxCredit);
+    Page<SubjectDTO> findByMultipleConditions(Academy academy, String subjectName, Double minCredit, Double maxCredit, Pageable pageable);
     
     // 统计操作
-    long countByAcademy(String academy);
+    long countByAcademy(Academy academy);
     long countByCredit(Double credit);
     long countByCreditBetween(Double minCredit, Double maxCredit);
-    long countByAcademyAndCreditBetween(String academy, Double minCredit, Double maxCredit);
+    long countByAcademyAndCreditBetween(Academy academy, Double minCredit, Double maxCredit);
     
     // 聚合操作
-    Double sumCreditByAcademy(String academy);
-    List<String> findAllAcademies();
-    List<Double> findCreditsByAcademy(String academy);
+    Double sumCreditByAcademy(Academy academy);
+    List<Academy> findAllAcademies();
+    List<Double> findCreditsByAcademy(Academy academy);
     
     // 业务逻辑操作
-    boolean existsByAcademyAndSubjectName(String academy, String subjectName);
-    Subject createSubject(String subjectName, String academy, Double credit);
-    Subject updateSubject(Long id, String subjectName, String academy, Double credit);
-    List<Subject> getSubjectsByAcademy(String academy);
-    List<Subject> searchSubjects(String keyword);
+    boolean existsByAcademyAndSubjectName(Academy academy, String subjectName);
+    Subject createSubject(String subjectName, Academy academy, Double credit);
+    Subject updateSubject(Long id, String subjectName, Academy academy, Double credit);
+    List<SubjectDTO> getSubjectsByAcademy(Academy academy);
+    List<SubjectDTO> searchSubjects(String keyword);
 }
