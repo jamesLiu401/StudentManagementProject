@@ -63,7 +63,21 @@ public class SubClass {
         return "SubClass{" +
                 "subClassId=" + subClassId +
                 ", subClassName='" + subClassName + '\'' +
-                ", totalClass=" + totalClass +
+                ", totalClass=" + getTotalClassNameSafely() +
                 '}';
+    }
+    
+    /**
+     * 安全地获取大班名称，避免懒加载异常
+     */
+    private String getTotalClassNameSafely() {
+        if (totalClass == null) {
+            return "null";
+        }
+        try {
+            return totalClass.getTotalClassName();
+        } catch (Exception e) {
+            return "LazyLoaded";
+        }
     }
 }

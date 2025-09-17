@@ -17,7 +17,8 @@ const EditSubject = () => {
 
     const [formData, setFormData] = useState({
         subjectName: '',
-        academy: '',
+        academyId: '',
+        academyName: '',
         credit: ''
     });
 
@@ -39,7 +40,8 @@ const EditSubject = () => {
                     const subjectData = subjectResponse.data.data;
                     setFormData({
                         subjectName: subjectData.subjectName || '',
-                        academy: subjectData.academy || '',
+                        academyId: subjectData.academyId || '',
+                        academyName: subjectData.academyName || '',
                         credit: subjectData.credit || ''
                     });
                 } else {
@@ -69,10 +71,20 @@ const EditSubject = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        if(name === 'academyId') {
+            let academyId = parseInt(value,10);
+            let academy = academies.find(ac => ac.academyId === academyId);
+            setFormData(prev => ({
+                ...prev,
+                academyId: academyId,
+                academyName: academy ? academy.academyName : '',
+            }));
+        }else{
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -83,12 +95,12 @@ const EditSubject = () => {
             return;
         }
         
-        if (!formData.academy) {
+        if (!formData.academyId || !formData.academyName) {
             setError('请选择学院');
             return;
         }
 
-        if (!formData.credit || isNaN(formData.credit) || parseInt(formData.credit) <= 0) {
+        if (!formData.credit || isNaN(formData.credit) || parseFloat(formData.credit) <= 0) {
             setError('请输入有效的学分（大于0的数字）');
             return;
         }
@@ -96,12 +108,14 @@ const EditSubject = () => {
         try {
             setLoading(true);
             setError('');
-            
-            const response = await subjectApi.updateSubject(parseInt(id), {
-                subjectName: formData.subjectName.trim(),
-                academy: parseInt(formData.academy),
-                credit: parseInt(formData.credit)
-            });
+
+            const response = await subjectApi.updateSubject(parseInt(id),
+                {
+                    subjectName: formData.subjectName.trim(),
+                    academyId: parseInt(formData.academyId,10),
+                    academyName: formData.academyName.trim(),
+                    credit: parseFloat(formData.credit)
+                });
             
             if (response && response.status === 200) {
                 navigate(`/subjects/${id}`);
@@ -189,8 +203,8 @@ const EditSubject = () => {
                                         </div>
                                     ) : (
                                         <Form.Select
-                                            name="academy"
-                                            value={formData.academy}
+                                            name="academyId"
+                                            value={formData.academyId}
                                             onChange={handleInputChange}
                                             required
                                         >
@@ -215,6 +229,7 @@ const EditSubject = () => {
                                         placeholder="请输入学分"
                                         min="1"
                                         max="10"
+                                        step={"any"}
                                         required
                                     />
                                 </Form.Group>

@@ -64,7 +64,21 @@ public class TotalClass {
         return "TotalClass{" +
                 "totalClassId=" + totalClassId +
                 ", totalClassName='" + totalClassName + '\'' +
-                ", major=" + major +
+                ", major=" + getMajorNameSafely() +
                 '}';
+    }
+    
+    /**
+     * 安全地获取专业名称，避免懒加载异常
+     */
+    private String getMajorNameSafely() {
+        if (major == null) {
+            return "null";
+        }
+        try {
+            return major.getMajorName();
+        } catch (Exception e) {
+            return "LazyLoaded";
+        }
     }
 }

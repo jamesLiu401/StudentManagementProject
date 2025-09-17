@@ -25,10 +25,10 @@ const SubjectDetail = () => {
                 if (subjectResponse && subjectResponse.status === 200) {
                     const subjectData = subjectResponse.data.data;
                     setSubject(subjectData);
-                    
+
                     // 加载学院信息
-                    if (subjectData.academy) {
-                        const academyResponse = await academyApi.getAcademyById(subjectData.academy);
+                    if (subjectData.academyId) {
+                        const academyResponse = await academyApi.getAcademyById(subjectData.academyId);
                         if (academyResponse && academyResponse.status === 200) {
                             setAcademy(academyResponse.data.data);
                         }

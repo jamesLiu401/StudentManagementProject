@@ -3,7 +3,9 @@ package com.jamesliu.stumanagement.student_management.controller;
 import com.jamesliu.stumanagement.student_management.Entity.ResponseMessage;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Subject;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Academy;
+import com.jamesliu.stumanagement.student_management.Service.AcademyService.AcademyService;
 import com.jamesliu.stumanagement.student_management.dto.SubjectDTO;
+import com.jamesliu.stumanagement.student_management.dto.DtoMapper;
 import com.jamesliu.stumanagement.student_management.Service.SubjectService.ISubjectService;
 import com.jamesliu.stumanagement.student_management.repository.StuRepo.AcademyRepository;
 import org.springframework.data.domain.Page;
@@ -42,10 +44,12 @@ public class SubjectController {
 
     private final ISubjectService subjectService;
     private final AcademyRepository academyRepository;
+    private final AcademyService academyService;
 
-    public SubjectController(ISubjectService subjectService, AcademyRepository academyRepository) {
+    public SubjectController(ISubjectService subjectService, AcademyRepository academyRepository, AcademyService academyService) {
         this.subjectService = subjectService;
         this.academyRepository = academyRepository;
+        this.academyService = academyService;
     }
 
     /**
@@ -100,27 +104,24 @@ public class SubjectController {
      * 更新课程信息
      * 
      * @param id 课程ID
-     * @param subject 更新的课程信息
+     * @param subjectDTO 更新的课程信息
      * @return 更新后的课程信息
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseMessage<Subject> updateSubject(
             @PathVariable Long id, 
-            @RequestBody Subject subject) {
+            @RequestBody SubjectDTO subjectDTO) {
         try {
             // 需要根据academyId获取Academy实体
             Academy academy = null;
-            if (subject.getAcademy() != null && subject.getAcademy().getAcademyId() != null) {
-                Optional<Academy> academyOpt = academyRepository.findById(subject.getAcademy().getAcademyId());
-                if (academyOpt.isEmpty()) {
-                    return ResponseMessage.error("学院不存在");
-                }
-                academy = academyOpt.get();
+            Optional<Academy> academyOpt = academyService.findById(subjectDTO.getAcademyId());
+            if (academyOpt.isEmpty()) {
+                return ResponseMessage.error("学院不存在");
             }
-            
+            academy = academyOpt.get();
             Subject updatedSubject = subjectService.updateSubject(id,
-                subject.getSubjectName(), academy, subject.getCredit());
+                subjectDTO.getSubjectName(), academy, subjectDTO.getCredit());
             return ResponseMessage.success(updatedSubject);
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());

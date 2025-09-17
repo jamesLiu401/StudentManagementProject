@@ -31,6 +31,9 @@ import EditPayment from './pages/EditPayment';
 
 // 成绩管理页面
 import Scores from './pages/Scores';
+import ScoreDetail from './pages/ScoreDetail';
+import AddScore from './pages/AddScore';
+import EditScore from './pages/EditScore';
 
 // 学院管理页面
 import Academies from './pages/Academies';
@@ -190,6 +193,23 @@ function App() {
 
                         {/* 成绩管理路由 */}
                         <Route path="scores" element={<Scores />} />
+                        <Route path="scores/:id" element={<ScoreDetail />} />
+                        <Route
+                            path="scores/add"
+                            element={
+                                <ProtectedRoute requireAdmin={true}>
+                                    <AddScore />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="scores/edit/:id"
+                            element={
+                                <ProtectedRoute requireAdmin={true}>
+                                    <EditScore />
+                                </ProtectedRoute>
+                            }
+                        />
 
                         {/* 学院管理路由 */}
                         <Route path="academies" element={<Academies />} />

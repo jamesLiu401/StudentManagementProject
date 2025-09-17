@@ -3,6 +3,7 @@ package com.jamesliu.stumanagement.student_management.repository.StuRepo;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Academy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
@@ -40,36 +41,45 @@ public interface AcademyRepository extends JpaRepository<Academy, Integer> {
     
     // 根据学院名称查询
     @NonNull
+    @EntityGraph(attributePaths = {"majors"})
     Optional<Academy> findByAcademyName(@NonNull String academyName);
     
     // 根据学院代码查询
     @NonNull
+    @EntityGraph(attributePaths = {"majors"})
     Optional<Academy> findByAcademyCode(@NonNull String academyCode);
 
     @NonNull
+    @EntityGraph(attributePaths = {"majors"})
     Optional<Academy> findByAcademyId(@NonNull Integer academyId);
     // 根据学院名称模糊查询
     @NonNull
+    @EntityGraph(attributePaths = {"majors"})
     List<Academy> findByAcademyNameContaining(@NonNull String academyName);
     
     // 根据院长姓名查询
     @NonNull
+    @EntityGraph(attributePaths = {"majors"})
     List<Academy> findByDeanName(@NonNull String deanName);
     
     // 根据院长姓名模糊查询
     @NonNull
+    @EntityGraph(attributePaths = {"majors"})
     List<Academy> findByDeanNameContaining(@NonNull String deanName);
     
     // 根据学院名称模糊查询和院长姓名查询
     @NonNull
+    @EntityGraph(attributePaths = {"majors"})
     List<Academy> findByAcademyNameContainingAndDeanName(@NonNull String academyName, @NonNull String deanName);
     
     // 根据学院名称模糊分页查询
     @NonNull
+    @EntityGraph(attributePaths = {"majors"})
     Page<Academy> findByAcademyNameContaining(@NonNull String academyName, @NonNull Pageable pageable);
     
     // 根据院长姓名分页查询
     @NonNull
+    @EntityGraph(attributePaths = {"majors"})
     Page<Academy> findByDeanName(@NonNull String deanName, @NonNull Pageable pageable);
     
     // 统计方法

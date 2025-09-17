@@ -10,7 +10,7 @@ public class StudentDTO {
 
     private boolean stuGender;
 
-    private String stuMajor;
+    private Integer majorId;
 
     private Integer stuGrade;
 
@@ -28,8 +28,8 @@ public class StudentDTO {
     public void setStuName(String stuName) { this.stuName = stuName; }
     public boolean isStuGender() { return stuGender; }
     public void setStuGender(boolean stuGender) { this.stuGender = stuGender; }
-    public String getStuMajor() { return stuMajor; }
-    public void setStuMajor(String stuMajor) { this.stuMajor = stuMajor; }
+    public Integer getMajorId() { return majorId; }
+    public void setMajorId(Integer majorId) { this.majorId = majorId; }
     public Integer getStuGrade() { return stuGrade; }
     public void setStuGrade(Integer stuGrade) { this.stuGrade = stuGrade; }
     public String getStuTel() { return stuTel; }

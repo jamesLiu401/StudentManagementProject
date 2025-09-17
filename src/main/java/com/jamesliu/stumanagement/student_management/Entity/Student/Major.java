@@ -114,9 +114,37 @@ public class Major {
         return "Major{" +
                 "majorId=" + majorId +
                 ", majorName='" + majorName + '\'' +
-                ", academy='" + academy + '\'' +
+                ", academy=" + getAcademyNameSafely() +
                 ", grade=" + grade +
-                ", counselor=" + counselor +
+                ", counselor=" + getCounselorNameSafely() +
                 '}';
+    }
+    
+    /**
+     * 安全地获取学院名称，避免懒加载异常
+     */
+    private String getAcademyNameSafely() {
+        if (academy == null) {
+            return "null";
+        }
+        try {
+            return academy.getAcademyName();
+        } catch (Exception e) {
+            return "LazyLoaded";
+        }
+    }
+    
+    /**
+     * 安全地获取辅导员名称，避免懒加载异常
+     */
+    private String getCounselorNameSafely() {
+        if (counselor == null) {
+            return "null";
+        }
+        try {
+            return counselor.getTeacherName();
+        } catch (Exception e) {
+            return "LazyLoaded";
+        }
     }
 }

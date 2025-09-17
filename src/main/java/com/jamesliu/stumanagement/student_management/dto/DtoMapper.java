@@ -50,13 +50,31 @@ public class DtoMapper {
         dto.setStuId(entity.getStuId());
         dto.setStuName(entity.getStuName());
         dto.setStuGender(entity.isStuGender());
-        dto.setStuMajor(entity.getStuMajor());
-        dto.setStuGrade(entity.getGrade());
+        
+        // 安全地获取专业ID
+        if (entity.getStuMajor() != null) {
+            try {
+                dto.setMajorId(entity.getStuMajor().getMajorId());
+            } catch (Exception e) {
+                // 如果出现懒加载异常，设置为null
+                dto.setMajorId(null);
+            }
+        }
+        
+        dto.setStuGrade(entity.getStuGrade());
         dto.setStuTel(entity.getStuTel());
         dto.setStuAddress(entity.getStuAddress());
+        
+        // 安全地获取班级信息
         if (entity.getStuClassId() != null) {
-            dto.setStuClassId(entity.getStuClassId().getSubClassId());
-            dto.setStuClassName(entity.getStuClassId().getSubClassName());
+            try {
+                dto.setStuClassId(entity.getStuClassId().getSubClassId());
+                dto.setStuClassName(entity.getStuClassId().getSubClassName());
+            } catch (Exception e) {
+                // 如果出现懒加载异常，设置为null
+                dto.setStuClassId(null);
+                dto.setStuClassName(null);
+            }
         }
         return dto;
     }

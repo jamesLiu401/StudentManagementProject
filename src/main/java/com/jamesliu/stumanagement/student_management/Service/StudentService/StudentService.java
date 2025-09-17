@@ -13,12 +13,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.jamesliu.stumanagement.student_management.dto.StudentDTO;
+import com.jamesliu.stumanagement.student_management.dto.DtoMapper;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -41,13 +44,20 @@ import java.util.Optional;
  */
 @Service
 public class StudentService implements IStudentService {
-
+    //学生库管理类
     private final StudentRepository studentRepository;
+
+    //小班库管理类
     private final SubClassRepository subClassRepository;
+
+    //大班（专业）班级信息库管理类
     private final TotalClassRepository totalClassRepository;
+
+    //专业信息库管理类
     private final MajorRepository majorRepository;
     private final AcademyRepository academyRepository;
 
+    //构造函数
     public StudentService(StudentRepository studentRepository,
                          SubClassRepository subClassRepository,
                          TotalClassRepository totalClassRepository,
@@ -62,34 +72,42 @@ public class StudentService implements IStudentService {
 
     @Override
     @Transactional
-    public Student addStudent(Student student) {
+    public Student addStudent(StudentDTO studentDto) {
+        // DTO -> Entity
+        Student student = new Student();
+        student.setStuName(studentDto.getStuName());
+        student.setStuGender(studentDto.isStuGender());
+
+        Optional<Major> qed_major = majorRepository.findById(studentDto.getMajorId());
+        qed_major.ifPresent(student::setStuMajor);
+
+        student.setStuGrade(studentDto.getStuGrade());
+        student.setStuTel(studentDto.getStuTel());
+        student.setStuAddress(studentDto.getStuAddress());
         // 智能创建关联数据
-        SubClass subClass = ensureClassExists(student);
+        SubClass subClass = ensureClassExists(student, studentDto);
         student.setStuClassId(subClass);
-        
         return studentRepository.save(student);
     }
     
     /**
      * 确保班级存在，如果不存在则自动创建
      */
-    private SubClass ensureClassExists(Student student) {
+    private SubClass ensureClassExists(Student student, StudentDTO studentDto) {
         // 如果学生已经指定了班级，直接返回
-        if (student.getStuClassId() != null && student.getStuClassId().getSubClassId() != null) {
-            return subClassRepository.findById(student.getStuClassId().getSubClassId())
+        if (studentDto.getStuClassId() != null) {
+            return subClassRepository.findById(studentDto.getStuClassId())
                     .orElseThrow(() -> new RuntimeException("指定的班级不存在"));
         }
         
         // 根据学生信息自动创建班级
-        String className = generateClassName(student);
-        String majorName = student.getStuMajor();
-        Integer grade = student.getGrade();
+        String className = generateClassName(studentDto);
         
         // 1. 确保专业存在
-        Major major = ensureMajorExists(majorName, grade);
+        Major major = ensureMajorExists(studentDto.getMajorId());
         
         // 2. 确保大班存在
-        TotalClass totalClass = ensureTotalClassExists(major, grade);
+        TotalClass totalClass = ensureTotalClassExists(major, studentDto.getStuGrade());
         
         // 3. 确保小班存在
         return ensureSubClassExists(totalClass, className);
@@ -98,13 +116,18 @@ public class StudentService implements IStudentService {
     /**
      * 生成班级名称
      */
-    private String generateClassName(Student student) {
-        String major = student.getStuMajor();
-        Integer grade = student.getGrade();
-        
-        // 生成班级名称，如：计科2301
-        if (major != null && grade != null) {
-            return major.substring(0, Math.min(2, major.length())) + grade.toString().substring(2) + "01";
+    private String generateClassName(StudentDTO studentDto) {
+        // 获取专业信息
+        Optional<Major> majorOpt = majorRepository.findById(studentDto.getMajorId());
+        if (majorOpt.isPresent()) {
+            Major major = majorOpt.get();
+            String majorName = major.getMajorName();
+            Integer grade = studentDto.getStuGrade();
+            
+            // 生成班级名称，如：计科2301
+            if (majorName != null && grade != null) {
+                return majorName.substring(0, Math.min(2, majorName.length())) + grade.toString().substring(2) + "01";
+            }
         }
         return "默认班级";
     }
@@ -112,23 +135,18 @@ public class StudentService implements IStudentService {
     /**
      * 确保专业存在
      */
-    private Major ensureMajorExists(String majorName, Integer grade) {
-        if (majorName == null) {
-            majorName = "默认专业";
+    private Major ensureMajorExists(Integer majorId) {
+        if (majorId == null) {
+            throw new RuntimeException("专业ID不能为空");
         }
         
         // 查找现有专业
-        Optional<Major> existingMajor = majorRepository.findByMajorNameAndGrade(majorName, grade);
+        Optional<Major> existingMajor = majorRepository.findById(majorId);
         if (existingMajor.isPresent()) {
             return existingMajor.get();
         }
         
-        // 创建新专业
-        Major major = new Major();
-        major.setMajorName(majorName);
-        major.setGrade(grade);
-        major.setAcademy(ensureAcademyExists("默认学院"));
-        return majorRepository.save(major);
+        throw new RuntimeException("指定的专业不存在，ID: " + majorId);
     }
     
     /**
@@ -168,19 +186,28 @@ public class StudentService implements IStudentService {
     }
 
     @Override
-    public Student updateStudent(Integer id, Student student) {
+    public Student updateStudent(Integer id, StudentDTO studentDto) {
         return studentRepository.findById(id)
-                .map(existingStudent -> {
-                    existingStudent.setStuName(student.getStuName());
-                    existingStudent.setStuGender(student.isStuGender());
-                    existingStudent.setStuMajor(student.getStuMajor());
-                    existingStudent.setStuClassId(student.getStuClassId());
-                    existingStudent.setGrade(student.getGrade());
-                    existingStudent.setStuTel(student.getStuTel());
-                    existingStudent.setStuAddress(student.getStuAddress());
-                    return studentRepository.save(existingStudent);
-                })
-                .orElseThrow(() -> new RuntimeException("学生不存在，ID: " + id));
+                .map(
+                        existingStudent -> {
+                            existingStudent.setStuName(studentDto.getStuName());
+                            existingStudent.setStuGender(studentDto.isStuGender());
+
+                            Integer stuMajorId = studentDto.getMajorId();
+                            majorRepository.findById(stuMajorId).ifPresent(existingStudent::setStuMajor);
+
+                            existingStudent.setStuGrade(studentDto.getStuGrade());
+                            existingStudent.setStuTel(studentDto.getStuTel());
+                            existingStudent.setStuAddress(studentDto.getStuAddress());
+                            // 班级更新（如果传入）
+                            if (studentDto.getStuClassId() != null) {
+                                SubClass subClass = subClassRepository.findById(studentDto.getStuClassId())
+                                        .orElseThrow(() -> new RuntimeException("指定的班级不存在"));
+                                existingStudent.setStuClassId(subClass);
+                            }
+                            return studentRepository.save(existingStudent);
+                         })
+                 .orElseThrow(() -> new RuntimeException("学生不存在，ID: " + id));
     }
 
     @Override
@@ -199,7 +226,7 @@ public class StudentService implements IStudentService {
 
     @Override
     public List<Student> getAllStudents() {
-        return studentRepository.findAll();
+        return studentRepository.findAll().stream().toList();
     }
 
     @Override
@@ -209,7 +236,7 @@ public class StudentService implements IStudentService {
 
     @Override
     public List<Student> searchStudentsByName(String name) {
-        return studentRepository.findByStuNameContaining(name);
+        return studentRepository.findByStuNameContaining(name).stream().toList();
     }
 
     @Override
@@ -226,22 +253,29 @@ public class StudentService implements IStudentService {
             while ((line = reader.readLine()) != null) {
                 String[] data = line.split(",");
                 if (data.length >= 7) {
-                    Student student = new Student();
+                    StudentDTO studentDTO = new StudentDTO();
                     // 假设CSV格式：姓名,性别,专业,班级ID,年级,电话,地址
-                    student.setStuName(data[0]);
-                    student.setStuGender("男".equals(data[1]) || "true".equals(data[1]));
-                    student.setStuMajor(data[2]);
+                    studentDTO.setStuName(data[0]);
+                    studentDTO.setStuGender("男".equals(data[1]) || "true".equals(data[1]));
+                    studentDTO.setMajorId(Integer.parseInt(data[2]));
                     // 班级ID处理需要额外逻辑，这里简化处理
-                    student.setGrade(Integer.parseInt(data[4]));
-                    student.setStuTel(data[5]);
-                    student.setStuAddress(data[6]);
-                    
+                    studentDTO.setStuGrade(Integer.parseInt(data[4]));
+                    studentDTO.setStuTel(data[5]);
+                    studentDTO.setStuAddress(data[6]);
+
+                    Student student = new Student();
+                    Optional<Major> major = majorRepository.findById(studentDTO.getMajorId());
+                    major.ifPresent(student::setStuMajor);
+
+
+
                     students.add(student);
                 }
             }
             
             studentRepository.saveAll(students);
-            return ResponseMessage.success("批量导入成功，共导入 " + students.size() + " 条记录", students);
+            List<Student> stuList = students.stream().toList();
+            return ResponseMessage.success("批量导入成功，共导入 " + students.size() + " 条记录", stuList);
             
         } catch (IOException e) {
             throw new RuntimeException("文件读取失败: " + e.getMessage());
@@ -255,7 +289,7 @@ public class StudentService implements IStudentService {
      */
     private Academy ensureAcademyExists(String academyName) {
         String finalAcademyName = academyName;
-        if (finalAcademyName == null) {
+        if (Objects.equals(finalAcademyName, "")) {
             finalAcademyName = "默认学院";
         }
         

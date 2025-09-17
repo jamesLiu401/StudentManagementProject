@@ -50,13 +50,15 @@ public class Student {
     private boolean stuGender;
 
     //专业
-    @Column(name="stu_major")
-    private String stuMajor;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="major_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Major stuMajor;
 
     //班级
     @ManyToOne()
     @JoinColumn(name = "class_id")
-    //@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private SubClass stuClassId;
 
     //年级
@@ -96,11 +98,11 @@ public class Student {
         this.stuGender = stuGender;
     }
 
-    public String getStuMajor() {
+    public Major getStuMajor() {
         return stuMajor;
     }
 
-    public void setStuMajor(String stuMajor) {
+    public void setStuMajor(Major stuMajor) {
         this.stuMajor = stuMajor;
     }
 
@@ -112,11 +114,11 @@ public class Student {
         this.stuClassId = stuClassId;
     }
 
-    public Integer getGrade() {
+    public Integer getStuGrade() {
         return grade;
     }
 
-    public void setGrade(Integer grade) {
+    public void setStuGrade(Integer grade) {
         this.grade = grade;
     }
 
@@ -142,11 +144,39 @@ public class Student {
                 "stuId=" + stuId +
                 ", stuName='" + stuName + '\'' +
                 ", stuGender=" + stuGender +
-                ", stuMajor='" + stuMajor + '\'' +
-                ", stuClass=" + stuClassId +
+                ", stuMajor=" + getMajorNameSafely() +
+                ", stuClass=" + getClassNameSafely() +
                 ", grade=" + grade +
                 ", stuTel='" + stuTel + '\'' +
                 ", stuAddress='" + stuAddress + '\'' +
                 '}';
+    }
+    
+    /**
+     * 安全地获取专业名称，避免懒加载异常
+     */
+    private String getMajorNameSafely() {
+        if (stuMajor == null) {
+            return "null";
+        }
+        try {
+            return stuMajor.getMajorName();
+        } catch (Exception e) {
+            return "LazyLoaded";
+        }
+    }
+    
+    /**
+     * 安全地获取班级名称，避免懒加载异常
+     */
+    private String getClassNameSafely() {
+        if (stuClassId == null) {
+            return "null";
+        }
+        try {
+            return stuClassId.getSubClassName();
+        } catch (Exception e) {
+            return "LazyLoaded";
+        }
     }
 }

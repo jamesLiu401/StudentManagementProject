@@ -3,6 +3,8 @@ package com.jamesliu.stumanagement.student_management.controller;
 import com.jamesliu.stumanagement.student_management.Entity.ResponseMessage;
 import com.jamesliu.stumanagement.student_management.Entity.Student.Student;
 import com.jamesliu.stumanagement.student_management.Service.StudentService.IStudentService;
+import com.jamesliu.stumanagement.student_management.dto.StudentDTO;
+import com.jamesliu.stumanagement.student_management.dto.DtoMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -57,18 +59,20 @@ public class StudentController {
      */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<Student> addStudent(@RequestBody Student student) {
+    public ResponseMessage<StudentDTO> addStudent(@RequestBody StudentDTO student) {
         Student savedStudent = studentService.addStudent(student);
-        return ResponseMessage.success(savedStudent);
+        StudentDTO resultDto = DtoMapper.toDto(savedStudent);
+        return ResponseMessage.success(resultDto);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<Student> updateStudent(
+    public ResponseMessage<StudentDTO> updateStudent(
             @PathVariable Integer id, 
-            @RequestBody Student student) {
+            @RequestBody StudentDTO student) {
         Student updatedStudent = studentService.updateStudent(id, student);
-        return ResponseMessage.success(updatedStudent);
+        StudentDTO resultDto = DtoMapper.toDto(updatedStudent);
+        return ResponseMessage.success(resultDto);
     }
 
     @DeleteMapping("/{id}")
@@ -80,21 +84,25 @@ public class StudentController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Student> getStudentById(@PathVariable Integer id) {
+    public ResponseMessage<StudentDTO> getStudentById(@PathVariable Integer id) {
         Student student = studentService.getStudentById(id);
-        return ResponseMessage.success(student);
+        StudentDTO resultDto = DtoMapper.toDto(student);
+        return ResponseMessage.success(resultDto);
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Student>> getAllStudents() {
+    public ResponseMessage<List<StudentDTO>> getAllStudents() {
         List<Student> students = studentService.getAllStudents();
-        return ResponseMessage.success(students);
+        List<StudentDTO> studentDTOs = students.stream()
+                .map(DtoMapper::toDto)
+                .toList();
+        return ResponseMessage.success(studentDTOs);
     }
 
     @GetMapping("/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Student>> getStudentsByPage(
+    public ResponseMessage<Page<StudentDTO>> getStudentsByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "stuId") String sortBy,
@@ -105,15 +113,19 @@ public class StudentController {
         
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<Student> students = studentService.getStudentsByPage(pageable);
-        return ResponseMessage.success(students);
+        Page<StudentDTO> studentDTOs = students.map(DtoMapper::toDto);
+        return ResponseMessage.success(studentDTOs);
     }
 
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Student>> searchStudentsByName(
+    public ResponseMessage<List<StudentDTO>> searchStudentsByName(
             @RequestParam String name) {
         List<Student> students = studentService.searchStudentsByName(name);
-        return ResponseMessage.success(students);
+        List<StudentDTO> studentDTOs = students.stream()
+                .map(DtoMapper::toDto)
+                .toList();
+        return ResponseMessage.success(studentDTOs);
     }
 
     /**
@@ -134,7 +146,7 @@ public class StudentController {
      */
     @PostMapping("/batch/import")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<List<Student>> batchImportFromCsv(
+    public ResponseMessage<List<StudentDTO>> batchImportFromCsv(
             @RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseMessage.error("请选择要上传的文件");
@@ -144,6 +156,10 @@ public class StudentController {
             return ResponseMessage.error("请上传CSV格式的文件");
         }
         
-        return studentService.batchImportFromCsv(file);
+        ResponseMessage<List<Student>> result = studentService.batchImportFromCsv(file);
+        List<StudentDTO> studentDTOs = result.getData().stream()
+                .map(DtoMapper::toDto)
+                .toList();
+        return ResponseMessage.success(result.getMessage(), studentDTOs);
     }
 }

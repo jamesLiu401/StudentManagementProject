@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Container, Card, Form, Button, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { createStudent } from '../api/student';
-import { getSubClasses } from '../api/class';
+import {getSubClassById, getSubClasses} from '../api/class';
+import {getMajors} from "../api/major";
 
 const AddStudent = () => {
     const navigate = useNavigate();
@@ -11,14 +12,17 @@ const AddStudent = () => {
         stuGender: true, // 默认男
         stuTel: '',
         stuAddress: '',
-        stuMajor: '',
-        grade: '',
-        subClassId: ''
+        majorId: '',
+        stuGrade: '',
+        stuClassId: '',
+        stuClassName:''
     });
     const [subClasses, setSubClasses] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [majors, setMajors] = useState([]);
+    const [majorsLoading, setMajorsLoading] = useState(true);
 
     // 获取班级列表
     useEffect(() => {
@@ -33,17 +37,51 @@ const AddStudent = () => {
                 setError('获取班级列表失败');
             }
         };
+        const fetchMajors = async () => {
+            try{
+                setMajorsLoading(true);
+                const response = await getMajors();
+                if (response?.data?.data) {
+                    setMajors(response.data.data);
+                }
+            }catch(err) {
+                console.error('获取专业列表失败',err);
+                setError('获取专业列表失败');
+            } finally {
+                setMajorsLoading(false);
+            }
+        };
 
         fetchSubClasses();
+        fetchMajors();
     }, []);
 
     // 处理表单输入变化
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
+        
+        if (name === 'majorId') {
+            // 当选择专业时，自动填充年级
+            const selectedMajor = majors.find(major => major.majorId === parseInt(value, 10));
+            setFormData(prev => ({
+                ...prev,
+                [name]: value,
+                stuGrade: selectedMajor ? selectedMajor.grade : ''
+            }));
+        } else if(name === 'stuClassId') {
+            const selectedClass = subClasses.find(subClass => subClass.subClassId === parseInt(value, 10));
+            setFormData(prev =>({
+                ...prev,
+                [name]: value,
+                stuClassName : selectedClass.subClassName,
+            }));
+        } else{
+            setFormData(prev => ({
+                ...prev,
+                [name]: type === 'checkbox' ? checked : value
+            }));
+        }
+        
         // 清除错误和成功提示
         setError('');
         setSuccess('');
@@ -58,15 +96,18 @@ const AddStudent = () => {
 
         try {
             // 构建请求数据 - 只包含后端接受的字段
+            const selectedMajor = majors.find(major => major.majorId === parseInt(formData.majorId, 10));
+            const selectedSubClass = subClasses.find(subClass => subClass.subClassId === parseInt(formData.subClassId, 10));
+            
             const studentData = {
                 stuName: formData.stuName,
                 stuGender: formData.stuGender,
                 stuTel: formData.stuTel,
                 stuAddress: formData.stuAddress,
-                stuMajor: formData.stuMajor,
-                grade: formData.grade,
-                // 尝试使用与后端实体类字段名匹配的格式
-                stuClassId: { subClassId: formData.subClassId }
+                majorId: parseInt(formData.majorId, 10),
+                stuGrade: parseInt(formData.stuGrade, 10),
+                stuClassId: parseInt(formData.stuClassId, 10),
+                stuClassName: formData.stuClassName.trim(),
             };
 
             const response = await createStudent(studentData);
@@ -78,9 +119,10 @@ const AddStudent = () => {
                     stuGender: true,
                     stuTel: '',
                     stuAddress: '',
-                    stuMajor: '',
-                    grade: '',
-                    subClassId: ''
+                    majorId: '',
+                    stuGrade: '',
+                    stuClassId: '',
+                    stuClassName: ''
                 });
                 // 3秒后返回学生列表
                 setTimeout(() => {
@@ -166,8 +208,8 @@ const AddStudent = () => {
                             <Form.Label>班级 <span className="text-danger">*</span></Form.Label>
                             <Form.Control
                                 as="select"
-                                name="subClassId"
-                                value={formData.subClassId}
+                                name="stuClassId"
+                                value={formData.stuClassId}
                                 onChange={handleChange}
                                 required
                             >
@@ -181,16 +223,28 @@ const AddStudent = () => {
                         </Form.Group>
 
                         {/* 专业 */}
-                        <Form.Group controlId="formStuMajor" className="mb-3">
+                        <Form.Group controlId="formMajorId" className="mb-3">
                             <Form.Label>专业 <span className="text-danger">*</span></Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="stuMajor"
-                                value={formData.stuMajor}
-                                onChange={handleChange}
-                                placeholder="请输入专业名称"
-                                required
-                            />
+                            {majorsLoading ? (
+                                <Form.Control as="select" disabled>
+                                    <option>加载专业列表中...</option>
+                                </Form.Control>
+                            ) : (
+                                <Form.Control
+                                    as="select"
+                                    name="majorId"
+                                    value={formData.majorId}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    <option value="">请选择专业</option>
+                                    {majors.map(major => (
+                                        <option key={major.majorId} value={major.majorId}>
+                                            {major.majorName} ({major.grade}级)
+                                        </option>
+                                    ))}
+                                </Form.Control>
+                            )}
                         </Form.Group>
 
                         {/* 年级 */}
@@ -199,11 +253,18 @@ const AddStudent = () => {
                             <Form.Control
                                 type="text"
                                 name="grade"
-                                value={formData.grade}
+                                value={formData.stuGrade}
                                 onChange={handleChange}
-                                placeholder="请输入年级，如：2023"
+                                placeholder={formData.majorId ? "已根据专业自动填充" : "请先选择专业"}
+                                readOnly={!!formData.majorId}
                                 required
                             />
+                            {formData.majorId && (
+                                <Form.Text className="text-muted">
+                                    <i className="fas fa-info-circle me-1"></i>
+                                    年级已根据所选专业自动填充
+                                </Form.Text>
+                            )}
                         </Form.Group>
 
                         {/* 电话 */}

@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getMajorById } from '../api/major';
 import { getAcademyById } from '../api/academy';
 import { useAuth } from '../contexts/AuthContexts';
+import {getTeacherById} from "../api/teacher";
 
 const MajorDetail = () => {
     const navigate = useNavigate();
@@ -11,9 +12,9 @@ const MajorDetail = () => {
     const { isAdmin } = useAuth();
     const [major, setMajor] = useState(null);
     const [academyName, setAcademyName] = useState('');
+    const [counselor, setCounselor] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-
     useEffect(() => {
         const loadMajor = async () => {
             try {
@@ -31,6 +32,17 @@ const MajorDetail = () => {
                                 setAcademyName(acaResp.data.data.academyName);
                             }
                         } catch {}
+                    }
+                    // 获取辅导员信息
+                    if (m.counselorId) {
+                        try {
+                            const counselorResp = await getTeacherById(m.counselorId);
+                            if (counselorResp?.status === 200 && counselorResp?.data?.data) {
+                                setCounselor(counselorResp.data.data);
+                            }
+                        } catch (err) {
+                            console.warn('获取辅导员信息失败:', err);
+                        }
                     }
                 } else {
                     setError('加载专业信息失败');
@@ -150,10 +162,65 @@ const MajorDetail = () => {
                             </h5>
                         </Card.Header>
                         <Card.Body>
-                            <div className="mb-2">
-                                <strong>辅导员ID：</strong>
-                                <span className="ms-2">{major.counselorId || '未设置'}</span>
-                            </div>
+                            {counselor ? (
+                                <>
+                                    <div className="text-center mb-3">
+                                        <div className="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                                             style={{width: '60px', height: '60px'}}>
+                                            <i className="fas fa-user fa-lg"></i>
+                                        </div>
+                                    </div>
+                                    <div className="mb-3">
+                                        <strong>姓名：</strong>
+                                        <span className="ms-2">{counselor.teacherName || '未设置'}</span>
+                                    </div>
+                                    <div className="mb-3">
+                                        <strong>工号：</strong>
+                                        <span className="ms-2">
+                                            <Badge bg="secondary">{counselor.teacherNo || '未设置'}</Badge>
+                                        </span>
+                                    </div>
+                                    <div className="mb-3">
+                                        <strong>部门：</strong>
+                                        <span className="ms-2">{counselor.department || '未设置'}</span>
+                                    </div>
+                                    <div className="mb-3">
+                                        <strong>职称：</strong>
+                                        <span className="ms-2">
+                                            <Badge bg="info">{counselor.title || '未设置'}</Badge>
+                                        </span>
+                                    </div>
+                                    <div className="mb-3">
+                                        <strong>教师ID：</strong>
+                                        <span className="ms-2 text-muted">{counselor.teacherId}</span>
+                                    </div>
+                                    <div className="d-grid">
+                                        <Button 
+                                            variant="outline-primary" 
+                                            size="sm"
+                                            onClick={() => navigate(`/teachers/${counselor.teacherId}`)}
+                                        >
+                                            <i className="fas fa-eye me-2"></i>
+                                            查看详情
+                                        </Button>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="text-center text-muted">
+                                    <i className="fas fa-user-slash fa-3x mb-3"></i>
+                                    <p>暂未分配辅导员</p>
+                                    {isAdmin() && (
+                                        <Button 
+                                            variant="outline-primary" 
+                                            size="sm"
+                                            onClick={() => navigate(`/majors/edit/${id}`)}
+                                        >
+                                            <i className="fas fa-plus me-2"></i>
+                                            分配辅导员
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
                         </Card.Body>
                     </Card>
                 </Col>
