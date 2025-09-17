@@ -125,7 +125,7 @@ public class AuthController {
      * @return 创建成功的用户信息
      */
     @PostMapping("/register")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseMessage<User> register(@RequestBody User user) {
         if (userRepository.existsByUsername(user.getUsername())) {
             return ResponseMessage.error("用户名已存在");

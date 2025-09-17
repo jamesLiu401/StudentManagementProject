@@ -4,6 +4,7 @@ import com.jamesliu.stumanagement.student_management.Entity.Finance.Payment;
 import com.jamesliu.stumanagement.student_management.Entity.ResponseMessage;
 import com.jamesliu.stumanagement.student_management.Service.PaymentService.IPaymentService;
 import com.jamesliu.stumanagement.student_management.repository.StuRepo.StudentRepository;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import com.jamesliu.stumanagement.student_management.dto.PaymentDTO;
+import com.jamesliu.stumanagement.student_management.dto.DtoMapper;
 
 @RestController
 @RequestMapping("/payments")
@@ -29,10 +32,34 @@ public class PaymentController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<Payment> addPayment(@RequestBody Payment payment) {
+    public ResponseMessage<PaymentDTO> addPayment(@RequestBody Payment payment) {
         try {
             Payment savedPayment = paymentService.savePayment(payment);
-            return ResponseMessage.success(savedPayment);
+            return ResponseMessage.success(DtoMapper.toDto(savedPayment));
+        } catch (IllegalArgumentException e) {
+            return ResponseMessage.error(e.getMessage());
+        }
+    }
+
+    @PostMapping("/create")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseMessage<PaymentDTO> createPayment(@RequestBody PaymentCreateRequest request) {
+        try {
+            // 根据stuId查找学生
+            var student = studentRepository.findById(request.getStuId())
+                    .orElseThrow(() -> new IllegalArgumentException("学生不存在"));
+            
+            // 创建Payment对象
+            Payment payment = new Payment();
+            payment.setStudent(student);
+            payment.setPaymentType(request.getPaymentType());
+            payment.setAmount(request.getAmount());
+            payment.setPaymentStatus(request.getPaymentStatus());
+            payment.setDescription(request.getDescription());
+            payment.setPaymentDate(request.getPaymentDate());
+            
+            Payment savedPayment = paymentService.savePayment(payment);
+            return ResponseMessage.success(DtoMapper.toDto(savedPayment));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -40,14 +67,14 @@ public class PaymentController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<Payment> updatePayment(
+    public ResponseMessage<PaymentDTO> updatePayment(
             @PathVariable Integer id, 
             @RequestBody Payment payment) {
         try {
             Payment updatedPayment = paymentService.updatePayment(id,
                 payment.getPaymentType(), payment.getAmount(), 
                 payment.getPaymentStatus(), payment.getDescription());
-            return ResponseMessage.success(updatedPayment);
+            return ResponseMessage.success(DtoMapper.toDto(updatedPayment));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -55,13 +82,13 @@ public class PaymentController {
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseMessage<Payment> updatePaymentStatus(
+    public ResponseMessage<PaymentDTO> updatePaymentStatus(
             @PathVariable Integer id,
             @RequestBody PaymentStatusUpdateRequest request) {
         try {
             String status = request.isCompleted() ? "已缴费" : "未缴费";
             Payment updatedPayment = paymentService.updatePaymentStatus(id, status);
-            return ResponseMessage.success(updatedPayment);
+            return ResponseMessage.success(DtoMapper.toDto(updatedPayment));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -76,22 +103,22 @@ public class PaymentController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Payment> getPaymentById(@PathVariable Integer id) {
+    public ResponseMessage<PaymentDTO> getPaymentById(@PathVariable Integer id) {
         Optional<Payment> payment = paymentService.findById(id);
-        return payment.map(ResponseMessage::success)
+        return payment.map(p -> ResponseMessage.success(DtoMapper.toDto(p)))
                 .orElse(ResponseMessage.error("缴费记录不存在"));
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Payment>> getAllPayments() {
+    public ResponseMessage<List<PaymentDTO>> getAllPayments() {
         List<Payment> payments = paymentService.findAll();
-        return ResponseMessage.success(payments);
+        return ResponseMessage.success(payments.stream().map(DtoMapper::toDto).toList());
     }
 
     @GetMapping("/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Payment>> getPaymentsByPage(
+    public ResponseMessage<Page<PaymentDTO>> getPaymentsByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "paymentId") String sortBy,
@@ -102,33 +129,33 @@ public class PaymentController {
         
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<Payment> payments = paymentService.findAll(pageable);
-        return ResponseMessage.success(payments);
+        return ResponseMessage.success(payments.map(DtoMapper::toDto));
     }
 
     @GetMapping("/student/{studentId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Payment>> getPaymentsByStudent(@PathVariable Integer studentId) {
+    public ResponseMessage<List<PaymentDTO>> getPaymentsByStudent(@PathVariable Integer studentId) {
         List<Payment> payments = paymentService.findByStudentId(studentId);
-        return ResponseMessage.success(payments);
+        return ResponseMessage.success(payments.stream().map(DtoMapper::toDto).toList());
     }
 
     @GetMapping("/status/{status}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Payment>> getPaymentsByStatus(@PathVariable String status) {
+    public ResponseMessage<List<PaymentDTO>> getPaymentsByStatus(@PathVariable String status) {
         List<Payment> payments = paymentService.findByPaymentStatus(status);
-        return ResponseMessage.success(payments);
+        return ResponseMessage.success(payments.stream().map(DtoMapper::toDto).toList());
     }
 
     @GetMapping("/type/{type}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Payment>> getPaymentsByType(@PathVariable String type) {
+    public ResponseMessage<List<PaymentDTO>> getPaymentsByType(@PathVariable String type) {
         List<Payment> payments = paymentService.findByPaymentType(type);
-        return ResponseMessage.success(payments);
+        return ResponseMessage.success(payments.stream().map(DtoMapper::toDto).toList());
     }
 
     @GetMapping("/type/{type}/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Payment>> getPaymentsByTypePage(
+    public ResponseMessage<Page<PaymentDTO>> getPaymentsByTypePage(
             @PathVariable String type,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -140,12 +167,12 @@ public class PaymentController {
         
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<Payment> payments = paymentService.findByPaymentType(type, pageable);
-        return ResponseMessage.success(payments);
+        return ResponseMessage.success(payments.map(DtoMapper::toDto));
     }
 
     @GetMapping("/status/{status}/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Payment>> getPaymentsByStatusPage(
+    public ResponseMessage<Page<PaymentDTO>> getPaymentsByStatusPage(
             @PathVariable String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -157,19 +184,19 @@ public class PaymentController {
         
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<Payment> payments = paymentService.findByPaymentStatus(status, pageable);
-        return ResponseMessage.success(payments);
+        return ResponseMessage.success(payments.map(DtoMapper::toDto));
     }
 
     @GetMapping("/date-range")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Payment>> getPaymentsByDateRange(
+    public ResponseMessage<List<PaymentDTO>> getPaymentsByDateRange(
             @RequestParam String startDate,
             @RequestParam String endDate) {
         try {
             java.time.LocalDate start = java.time.LocalDate.parse(startDate);
             java.time.LocalDate end = java.time.LocalDate.parse(endDate);
             List<Payment> payments = paymentService.findByPaymentDateBetween(start, end);
-            return ResponseMessage.success(payments);
+            return ResponseMessage.success(payments.stream().map(DtoMapper::toDto).toList());
         } catch (Exception e) {
             return ResponseMessage.error("日期格式错误，请使用yyyy-MM-dd格式");
         }
@@ -177,23 +204,23 @@ public class PaymentController {
 
     @GetMapping("/amount-range")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Payment>> getPaymentsByAmountRange(
+    public ResponseMessage<List<PaymentDTO>> getPaymentsByAmountRange(
             @RequestParam java.math.BigDecimal minAmount,
             @RequestParam java.math.BigDecimal maxAmount) {
         List<Payment> payments = paymentService.findByAmountBetween(minAmount, maxAmount);
-        return ResponseMessage.success(payments);
+        return ResponseMessage.success(payments.stream().map(DtoMapper::toDto).toList());
     }
 
     @GetMapping("/student/{studentId}/type/{type}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Payment>> getPaymentsByStudentAndType(
+    public ResponseMessage<List<PaymentDTO>> getPaymentsByStudentAndType(
             @PathVariable Integer studentId,
             @PathVariable String type) {
         try {
             var student = studentRepository.findById(studentId)
                     .orElseThrow(() -> new IllegalArgumentException("学生不存在"));
             List<Payment> payments = paymentService.findByStudentAndPaymentType(student, type);
-            return ResponseMessage.success(payments);
+            return ResponseMessage.success(payments.stream().map(DtoMapper::toDto).toList());
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -201,14 +228,14 @@ public class PaymentController {
 
     @GetMapping("/student/{studentId}/status/{status}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Payment>> getPaymentsByStudentAndStatus(
+    public ResponseMessage<List<PaymentDTO>> getPaymentsByStudentAndStatus(
             @PathVariable Integer studentId,
             @PathVariable String status) {
         try {
             var student = studentRepository.findById(studentId)
                     .orElseThrow(() -> new IllegalArgumentException("学生不存在"));
             List<Payment> payments = paymentService.findByStudentAndPaymentStatus(student, status);
-            return ResponseMessage.success(payments);
+            return ResponseMessage.success(payments.stream().map(DtoMapper::toDto).toList());
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -216,16 +243,16 @@ public class PaymentController {
 
     @GetMapping("/type/{type}/status/{status}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Payment>> getPaymentsByTypeAndStatus(
+    public ResponseMessage<List<PaymentDTO>> getPaymentsByTypeAndStatus(
             @PathVariable String type,
             @PathVariable String status) {
         List<Payment> payments = paymentService.findByPaymentTypeAndPaymentStatus(type, status);
-        return ResponseMessage.success(payments);
+        return ResponseMessage.success(payments.stream().map(DtoMapper::toDto).toList());
     }
 
     @GetMapping("/student/{studentId}/date-range")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Payment>> getPaymentsByStudentAndDateRange(
+    public ResponseMessage<List<PaymentDTO>> getPaymentsByStudentAndDateRange(
             @PathVariable Integer studentId,
             @RequestParam String startDate,
             @RequestParam String endDate) {
@@ -235,7 +262,7 @@ public class PaymentController {
             java.time.LocalDate start = java.time.LocalDate.parse(startDate);
             java.time.LocalDate end = java.time.LocalDate.parse(endDate);
             List<Payment> payments = paymentService.findByStudentAndPaymentDateBetween(student, start, end);
-            return ResponseMessage.success(payments);
+            return ResponseMessage.success(payments.stream().map(DtoMapper::toDto).toList());
         } catch (Exception e) {
             return ResponseMessage.error("学生不存在或日期格式错误");
         }
@@ -243,7 +270,7 @@ public class PaymentController {
 
     @GetMapping("/student/{studentId}/amount-range")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Payment>> getPaymentsByStudentAndAmountRange(
+    public ResponseMessage<List<PaymentDTO>> getPaymentsByStudentAndAmountRange(
             @PathVariable Integer studentId,
             @RequestParam java.math.BigDecimal minAmount,
             @RequestParam java.math.BigDecimal maxAmount) {
@@ -251,7 +278,7 @@ public class PaymentController {
             var student = studentRepository.findById(studentId)
                     .orElseThrow(() -> new IllegalArgumentException("学生不存在"));
             List<Payment> payments = paymentService.findByStudentAndAmountBetween(student, minAmount, maxAmount);
-            return ResponseMessage.success(payments);
+            return ResponseMessage.success(payments.stream().map(DtoMapper::toDto).toList());
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -353,9 +380,9 @@ public class PaymentController {
     // 搜索功能
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Payment>> searchPayments(@RequestParam String keyword) {
+    public ResponseMessage<List<PaymentDTO>> searchPayments(@RequestParam String keyword) {
         List<Payment> payments = paymentService.searchPayments(keyword);
-        return ResponseMessage.success(payments);
+        return ResponseMessage.success(payments.stream().map(DtoMapper::toDto).toList());
     }
 
     // 内部类用于状态更新请求
@@ -368,6 +395,66 @@ public class PaymentController {
         
         public void setCompleted(boolean completed) {
             this.completed = completed;
+        }
+    }
+
+    // 内部类用于创建缴费记录请求
+    public static class PaymentCreateRequest {
+        private Integer stuId;
+        private String paymentType;
+        private Double amount;
+        private String paymentStatus;
+        private String description;
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        private java.time.LocalDate paymentDate;
+        
+        // Getters and Setters
+        public Integer getStuId() {
+            return stuId;
+        }
+        
+        public void setStuId(Integer stuId) {
+            this.stuId = stuId;
+        }
+        
+        public String getPaymentType() {
+            return paymentType;
+        }
+        
+        public void setPaymentType(String paymentType) {
+            this.paymentType = paymentType;
+        }
+        
+        public Double getAmount() {
+            return amount;
+        }
+        
+        public void setAmount(Double amount) {
+            this.amount = amount;
+        }
+        
+        public String getPaymentStatus() {
+            return paymentStatus;
+        }
+        
+        public void setPaymentStatus(String paymentStatus) {
+            this.paymentStatus = paymentStatus;
+        }
+        
+        public String getDescription() {
+            return description;
+        }
+        
+        public void setDescription(String description) {
+            this.description = description;
+        }
+        
+        public java.time.LocalDate getPaymentDate() {
+            return paymentDate;
+        }
+        
+        public void setPaymentDate(java.time.LocalDate paymentDate) {
+            this.paymentDate = paymentDate;
         }
     }
 }

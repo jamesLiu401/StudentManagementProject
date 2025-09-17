@@ -67,7 +67,8 @@ const Register = () => {
                 role: formData.role
             });
 
-            if (response.success) {
+            // 检查响应状态
+            if (response.status === 200) {
                 setSuccess('用户注册成功！');
                 setTimeout(() => {
                     navigate('/login');
@@ -77,7 +78,7 @@ const Register = () => {
             }
         } catch (err) {
             console.error('注册错误:', err);
-            setError(err.response?.data?.message || '注册失败，请稍后重试');
+            setError(err.response?.data?.message || err.message || '注册失败，请稍后重试');
         } finally {
             setLoading(false);
         }

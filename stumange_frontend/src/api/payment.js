@@ -14,7 +14,7 @@ export const getPaymentById = (id) => {
 };
 
 export const createPayment = (paymentData) => {
-    return apiClient.post('/payments', paymentData);
+    return apiClient.post('/payments/create', paymentData);
 };
 
 export const updatePayment = (id, paymentData) => {

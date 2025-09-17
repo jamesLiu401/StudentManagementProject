@@ -41,11 +41,16 @@ const MainLayout = () => {
         { path: '/subjects', label: '课程管理', icon: '📖' },
     ];
 
+    // 管理员专用菜单项
+    const adminMenuItems = [
+        { path: '/register', label: '用户注册', icon: '👤' },
+    ];
+
     return (
         <div className="d-flex">
             {/* 侧边栏 */}
-            <div className="bg-dark text-white" style={{ width: '250px', minHeight: '100vh' }}>
-                <div className="p-3">
+            <div className="bg-dark text-white d-flex flex-column" style={{ width: '250px', minHeight: '100vh' }}>
+                <div className="p-3 flex-grow-1">
                     <h4 className="text-center mb-4">
                         <i className="fas fa-graduation-cap me-2"></i>
                         学生管理系统
@@ -80,10 +85,30 @@ const MainLayout = () => {
                                 {item.label}
                             </button>
                         ))}
+                        
+                        {/* 管理员专用菜单 */}
+                        {isAdmin() && (
+                            <>
+                                <hr className="my-2 text-secondary" />
+                                {adminMenuItems.map((item) => (
+                                    <button
+                                        key={item.path}
+                                        className={`btn btn-link text-start text-white p-2 mb-1 ${
+                                            isActive(item.path) ? 'bg-primary' : ''
+                                        }`}
+                                        onClick={() => handleNavClick(item.path)}
+                                        style={{ border: 'none', textDecoration: 'none' }}
+                                    >
+                                        <span className="me-2">{item.icon}</span>
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </>
+                        )}
                     </nav>
                 </div>
 
-                <div className="position-absolute bottom-0 w-100 p-3">
+                <div className="p-3 border-top border-secondary">
                     <Button 
                         variant="outline-light" 
                         className="w-100"
@@ -114,12 +139,6 @@ const MainLayout = () => {
                             </span>
                         </Navbar.Brand>
                         
-                        <Nav className="ms-auto">
-                            <Nav.Link href="#" onClick={handleLogout}>
-                                <i className="fas fa-sign-out-alt me-1"></i>
-                                退出
-                            </Nav.Link>
-                        </Nav>
                     </Container>
                 </Navbar>
 
@@ -164,6 +183,26 @@ const MainLayout = () => {
                                 {item.label}
                             </button>
                         ))}
+                        
+                        {/* 管理员专用菜单 */}
+                        {isAdmin() && (
+                            <>
+                                <hr className="my-2" />
+                                {adminMenuItems.map((item) => (
+                                    <button
+                                        key={item.path}
+                                        className={`btn btn-link text-start p-2 mb-1 ${
+                                            isActive(item.path) ? 'bg-primary text-white' : ''
+                                        }`}
+                                        onClick={() => handleNavClick(item.path)}
+                                        style={{ border: 'none', textDecoration: 'none' }}
+                                    >
+                                        <span className="me-2">{item.icon}</span>
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </>
+                        )}
                     </nav>
                 </Offcanvas.Body>
             </Offcanvas>

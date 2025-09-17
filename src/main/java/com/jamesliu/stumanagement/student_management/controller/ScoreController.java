@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import com.jamesliu.stumanagement.student_management.dto.ScoreDTO;
+import com.jamesliu.stumanagement.student_management.dto.DtoMapper;
 
 /**
  * 成绩管理控制器
@@ -62,10 +64,10 @@ public class ScoreController {
      */
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Score> addScore(@RequestBody Score score) {
+    public ResponseMessage<ScoreDTO> addScore(@RequestBody Score score) {
         try {
             Score savedScore = scoreService.saveScore(score);
-            return ResponseMessage.success(savedScore);
+            return ResponseMessage.success(DtoMapper.toDto(savedScore));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -76,7 +78,7 @@ public class ScoreController {
      */
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Score> createScore(
+    public ResponseMessage<ScoreDTO> createScore(
             @RequestParam Integer studentId,
             @RequestParam Long subjectId,
             @RequestParam Double score) {
@@ -92,7 +94,7 @@ public class ScoreController {
             }
             
             Score newScore = scoreService.createScore(student.get(), subject.get(), score);
-            return ResponseMessage.success(newScore);
+            return ResponseMessage.success(DtoMapper.toDto(newScore));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -103,12 +105,12 @@ public class ScoreController {
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Score> updateScore(
+    public ResponseMessage<ScoreDTO> updateScore(
             @PathVariable Integer id,
             @RequestParam Double newScore) {
         try {
             Score updatedScore = scoreService.updateScore(id, newScore);
-            return ResponseMessage.success(updatedScore);
+            return ResponseMessage.success(DtoMapper.toDto(updatedScore));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -119,13 +121,13 @@ public class ScoreController {
      */
     @PutMapping("/update")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Score> updateScoreByStudentAndSubject(
+    public ResponseMessage<ScoreDTO> updateScoreByStudentAndSubject(
             @RequestParam Integer studentId,
             @RequestParam Long subjectId,
             @RequestParam Double newScore) {
         try {
             Score updatedScore = scoreService.updateScoreByStudentIdAndSubjectId(studentId, subjectId, newScore);
-            return ResponseMessage.success(updatedScore);
+            return ResponseMessage.success(DtoMapper.toDto(updatedScore));
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }
@@ -146,9 +148,9 @@ public class ScoreController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Score> getScoreById(@PathVariable Integer id) {
+    public ResponseMessage<ScoreDTO> getScoreById(@PathVariable Integer id) {
         Optional<Score> score = scoreService.findById(id);
-        return score.map(ResponseMessage::success)
+        return score.map(s -> ResponseMessage.success(DtoMapper.toDto(s)))
                 .orElse(ResponseMessage.error("成绩不存在"));
     }
     
@@ -157,9 +159,9 @@ public class ScoreController {
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Score>> getAllScores() {
+    public ResponseMessage<List<ScoreDTO>> getAllScores() {
         List<Score> scores = scoreService.findAll();
-        return ResponseMessage.success(scores);
+        return ResponseMessage.success(scores.stream().map(DtoMapper::toDto).toList());
     }
     
     /**
@@ -167,7 +169,7 @@ public class ScoreController {
      */
     @GetMapping("/page")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Page<Score>> getScoresByPage(
+    public ResponseMessage<Page<ScoreDTO>> getScoresByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "scoreId") String sortBy,
@@ -178,7 +180,7 @@ public class ScoreController {
         
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<Score> scores = scoreService.findAll(pageable);
-        return ResponseMessage.success(scores);
+        return ResponseMessage.success(scores.map(DtoMapper::toDto));
     }
     
     /**
@@ -186,9 +188,9 @@ public class ScoreController {
      */
     @GetMapping("/student/{studentId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Score>> getScoresByStudentId(@PathVariable Integer studentId) {
+    public ResponseMessage<List<ScoreDTO>> getScoresByStudentId(@PathVariable Integer studentId) {
         List<Score> scores = scoreService.findByStudentId(studentId);
-        return ResponseMessage.success(scores);
+        return ResponseMessage.success(scores.stream().map(DtoMapper::toDto).toList());
     }
     
     /**
@@ -196,9 +198,9 @@ public class ScoreController {
      */
     @GetMapping("/subject/{subjectId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Score>> getScoresBySubjectId(@PathVariable Long subjectId) {
+    public ResponseMessage<List<ScoreDTO>> getScoresBySubjectId(@PathVariable Long subjectId) {
         List<Score> scores = scoreService.findBySubjectId(subjectId);
-        return ResponseMessage.success(scores);
+        return ResponseMessage.success(scores.stream().map(DtoMapper::toDto).toList());
     }
     
     /**
@@ -206,11 +208,11 @@ public class ScoreController {
      */
     @GetMapping("/student/{studentId}/subject/{subjectId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<Score> getScoreByStudentAndSubject(
+    public ResponseMessage<ScoreDTO> getScoreByStudentAndSubject(
             @PathVariable Integer studentId,
             @PathVariable Long subjectId) {
         Optional<Score> score = scoreService.findByStudentIdAndSubjectId(studentId, subjectId);
-        return score.map(ResponseMessage::success)
+        return score.map(s -> ResponseMessage.success(DtoMapper.toDto(s)))
                 .orElse(ResponseMessage.error("成绩不存在"));
     }
     
@@ -259,9 +261,9 @@ public class ScoreController {
      */
     @GetMapping("/student/{studentId}/passing")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Score>> getPassingScoresByStudent(@PathVariable Integer studentId) {
+    public ResponseMessage<List<ScoreDTO>> getPassingScoresByStudent(@PathVariable Integer studentId) {
         List<Score> scores = scoreService.getPassingScoresByStudentId(studentId);
-        return ResponseMessage.success(scores);
+        return ResponseMessage.success(scores.stream().map(DtoMapper::toDto).toList());
     }
     
     /**
@@ -269,9 +271,9 @@ public class ScoreController {
      */
     @GetMapping("/student/{studentId}/failing")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Score>> getFailingScoresByStudent(@PathVariable Integer studentId) {
+    public ResponseMessage<List<ScoreDTO>> getFailingScoresByStudent(@PathVariable Integer studentId) {
         List<Score> scores = scoreService.getFailingScoresByStudentId(studentId);
-        return ResponseMessage.success(scores);
+        return ResponseMessage.success(scores.stream().map(DtoMapper::toDto).toList());
     }
     
     /**
@@ -299,10 +301,10 @@ public class ScoreController {
      */
     @PostMapping("/batch")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseMessage<List<Score>> batchCreateScores(@RequestBody List<Score> scores) {
+    public ResponseMessage<List<ScoreDTO>> batchCreateScores(@RequestBody List<Score> scores) {
         try {
             List<Score> savedScores = scoreService.batchCreateScores(scores);
-            return ResponseMessage.success(savedScores);
+            return ResponseMessage.success(savedScores.stream().map(DtoMapper::toDto).toList());
         } catch (IllegalArgumentException e) {
             return ResponseMessage.error(e.getMessage());
         }

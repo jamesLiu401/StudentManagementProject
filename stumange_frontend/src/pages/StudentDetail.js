@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Card, Button, Alert, Spinner, Row, Col, Badge, Table, Tabs, Tab, ProgressBar } from 'react-bootstrap';
+import { Container, Card, Button, Alert, Spinner, Row, Col, Badge, Table, Tabs, Tab, ProgressBar, Form } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getStudentById } from '../api/student';
 import { useAuth } from '../contexts/AuthContexts';
@@ -7,7 +7,8 @@ import { getMajorById } from "../api/major";
 import { getAcademyById } from "../api/academy";
 import { getTeacherById } from "../api/teacher";
 import { getPaymentsByStudent, getTotalAmountByStudent } from '../api/payment';
-import { getScoresByStudentId, getAverageScoreByStudent, getPassingScoresByStudent, getFailingScoresByStudent } from '../api/score';
+import { getScoresByStudentId, getAverageScoreByStudent, getPassingScoresByStudent, getFailingScoresByStudent, createScoreByParams } from '../api/score';
+import { getSubjects } from '../api/subject';
 
 const StudentDetail = () => {
     const navigate = useNavigate();
@@ -27,6 +28,18 @@ const StudentDetail = () => {
     const [failingCount, setFailingCount] = useState(0);
     const [loadingPayments, setLoadingPayments] = useState(false);
     const [loadingScores, setLoadingScores] = useState(false);
+    
+    // 添加成绩相关状态
+    const [showAddScoreForm, setShowAddScoreForm] = useState(false);
+    const [subjects, setSubjects] = useState([]);
+    const [loadingSubjects, setLoadingSubjects] = useState(false);
+    const [addScoreForm, setAddScoreForm] = useState({
+        subjectId: '',
+        score: ''
+    });
+    const [addScoreLoading, setAddScoreLoading] = useState(false);
+    const [addScoreError, setAddScoreError] = useState('');
+    const [addScoreSuccess, setAddScoreSuccess] = useState('');
     useEffect(() => {
         const loadStudent = async () => {
             try {
@@ -138,6 +151,82 @@ const StudentDetail = () => {
         }
     };
 
+    // 加载课程数据
+    const loadSubjects = async () => {
+        try {
+            setLoadingSubjects(true);
+            const response = await getSubjects();
+            if (response?.status === 200 && response?.data?.data) {
+                setSubjects(response.data.data);
+            }
+        } catch (err) {
+            console.error('加载课程数据失败', err);
+        } finally {
+            setLoadingSubjects(false);
+        }
+    };
+
+    // 处理添加成绩表单输入
+    const handleAddScoreInputChange = (e) => {
+        const { name, value } = e.target;
+        setAddScoreForm(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    // 提交添加成绩
+    const handleAddScoreSubmit = async (e) => {
+        e.preventDefault();
+        
+        if (!addScoreForm.subjectId || !addScoreForm.score) {
+            setAddScoreError('请填写所有必填字段');
+            return;
+        }
+
+        const score = parseFloat(addScoreForm.score);
+        if (isNaN(score) || score < 0 || score > 100) {
+            setAddScoreError('分数必须在0-100之间');
+            return;
+        }
+
+        try {
+            setAddScoreLoading(true);
+            setAddScoreError('');
+            setAddScoreSuccess('');
+
+            await createScoreByParams(
+                parseInt(id),
+                parseInt(addScoreForm.subjectId),
+                score
+            );
+
+            setAddScoreSuccess('成绩添加成功！');
+            setAddScoreForm({ subjectId: '', score: '' });
+            
+            // 重新加载成绩数据
+            await loadScores();
+            
+            setTimeout(() => {
+                setAddScoreSuccess('');
+                setShowAddScoreForm(false);
+            }, 2000);
+        } catch (err) {
+            console.error('添加成绩失败:', err);
+            setAddScoreError('添加成绩失败：' + (err.response?.data?.message || '未知错误'));
+        } finally {
+            setAddScoreLoading(false);
+        }
+    };
+
+    // 取消添加成绩
+    const handleCancelAddScore = () => {
+        setShowAddScoreForm(false);
+        setAddScoreForm({ subjectId: '', score: '' });
+        setAddScoreError('');
+        setAddScoreSuccess('');
+    };
+
     if (loading) {
         return (
             <Container className="text-center py-5">
@@ -203,10 +292,15 @@ const StudentDetail = () => {
                             <Button 
                                 variant="info" 
                                 className="me-2"
-                                onClick={() => navigate(`/scores/add?studentId=${id}`)}
+                                onClick={() => {
+                                    setShowAddScoreForm(!showAddScoreForm);
+                                    if (!showAddScoreForm && subjects.length === 0) {
+                                        loadSubjects();
+                                    }
+                                }}
                             >
                                 <i className="fas fa-chart-line me-2"></i>
-                                添加成绩
+                                {showAddScoreForm ? '取消添加' : '添加成绩'}
                             </Button>
                             <Button 
                                 variant="outline-primary" 
@@ -416,6 +510,107 @@ const StudentDetail = () => {
                                     </span>
                                 }>
                                     <div className="mt-3">
+                                        {/* 添加成绩表单 */}
+                                        {showAddScoreForm && (
+                                            <Card className="mb-4 border-info">
+                                                <Card.Header className="bg-info text-white">
+                                                    <h6 className="mb-0">
+                                                        <i className="fas fa-plus me-2"></i>
+                                                        添加新成绩
+                                                    </h6>
+                                                </Card.Header>
+                                                <Card.Body>
+                                                    {addScoreError && (
+                                                        <Alert variant="danger">
+                                                            <i className="fas fa-exclamation-triangle me-2"></i>
+                                                            {addScoreError}
+                                                        </Alert>
+                                                    )}
+
+                                                    {addScoreSuccess && (
+                                                        <Alert variant="success">
+                                                            <i className="fas fa-check-circle me-2"></i>
+                                                            {addScoreSuccess}
+                                                        </Alert>
+                                                    )}
+
+                                                    <Form onSubmit={handleAddScoreSubmit}>
+                                                        <Row>
+                                                            <Col md={6}>
+                                                                <Form.Group className="mb-3">
+                                                                    <Form.Label>课程 <span className="text-danger">*</span></Form.Label>
+                                                                    <Form.Select
+                                                                        name="subjectId"
+                                                                        value={addScoreForm.subjectId}
+                                                                        onChange={handleAddScoreInputChange}
+                                                                        required
+                                                                        disabled={loadingSubjects}
+                                                                    >
+                                                                        <option value="">请选择课程</option>
+                                                                        {subjects.map((subject) => (
+                                                                            <option key={subject.subjectId} value={subject.subjectId}>
+                                                                                {subject.subjectName} ({subject.credit}学分)
+                                                                                {subject.academyName && ` - ${subject.academyName}`}
+                                                                            </option>
+                                                                        ))}
+                                                                    </Form.Select>
+                                                                    {loadingSubjects && (
+                                                                        <Form.Text className="text-muted">
+                                                                            <Spinner animation="border" size="sm" className="me-2" />
+                                                                            加载课程中...
+                                                                        </Form.Text>
+                                                                    )}
+                                                                </Form.Group>
+                                                            </Col>
+                                                            <Col md={4}>
+                                                                <Form.Group className="mb-3">
+                                                                    <Form.Label>分数 <span className="text-danger">*</span></Form.Label>
+                                                                    <Form.Control
+                                                                        type="number"
+                                                                        name="score"
+                                                                        value={addScoreForm.score}
+                                                                        onChange={handleAddScoreInputChange}
+                                                                        min="0"
+                                                                        max="100"
+                                                                        step="0.1"
+                                                                        placeholder="请输入分数 (0-100)"
+                                                                        required
+                                                                    />
+                                                                </Form.Group>
+                                                            </Col>
+                                                            <Col md={2} className="d-flex align-items-end">
+                                                                <div className="d-grid gap-2 w-100">
+                                                                    <Button
+                                                                        variant="success"
+                                                                        type="submit"
+                                                                        disabled={addScoreLoading || loadingSubjects}
+                                                                        size="sm"
+                                                                    >
+                                                                        {addScoreLoading ? (
+                                                                            <Spinner animation="border" size="sm" />
+                                                                        ) : (
+                                                                            <>
+                                                                                <i className="fas fa-save me-1"></i>
+                                                                                保存
+                                                                            </>
+                                                                        )}
+                                                                    </Button>
+                                                                    <Button
+                                                                        variant="outline-secondary"
+                                                                        onClick={handleCancelAddScore}
+                                                                        disabled={addScoreLoading}
+                                                                        size="sm"
+                                                                    >
+                                                                        <i className="fas fa-times me-1"></i>
+                                                                        取消
+                                                                    </Button>
+                                                                </div>
+                                                            </Col>
+                                                        </Row>
+                                                    </Form>
+                                                </Card.Body>
+                                            </Card>
+                                        )}
                                         {loadingScores ? (
                                             <div className="text-center py-4">
                                                 <Spinner animation="border" size="sm" />

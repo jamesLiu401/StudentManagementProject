@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
             if (response.status === 200) {
                 return response.data;
             } else {
-                throw new Error(response.message || '注册失败');
+                throw new Error(response.data?.message || '注册失败');
             }
         } catch (error) {
             throw error;
@@ -90,6 +90,14 @@ export const AuthProvider = ({ children }) => {
         return currentUser && currentUser.role === 'ROLE_TEACHER';
     };
 
+    // 处理token过期
+    const handleTokenExpired = () => {
+        console.warn('Token已过期，清除用户信息');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setCurrentUser(null);
+    };
+
     return (
         <AuthContext.Provider value={{
             currentUser,
@@ -98,7 +106,8 @@ export const AuthProvider = ({ children }) => {
             logout,
             isAdmin,
             isTeacher,
-            loading
+            loading,
+            handleTokenExpired
         }}>
             {children}
         </AuthContext.Provider>

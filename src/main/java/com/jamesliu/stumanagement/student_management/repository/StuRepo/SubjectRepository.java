@@ -88,6 +88,11 @@ public interface SubjectRepository extends JpaRepository<Subject, Long> {
     @EntityGraph(attributePaths = {"academy"})
     List<Subject> findByAcademyAndCreditBetween(@NonNull Academy academy, @NonNull Double minCredit, @NonNull Double maxCredit);
     
+    // 查询所有课程
+    @NonNull
+    @EntityGraph(attributePaths = {"academy"})
+    List<Subject> findAll();
+    
     // 分页查询所有课程
     @NonNull
     @EntityGraph(attributePaths = {"academy"})

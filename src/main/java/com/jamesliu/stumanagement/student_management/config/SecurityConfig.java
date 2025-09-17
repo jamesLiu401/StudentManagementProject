@@ -66,6 +66,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/login").permitAll()
+                .requestMatchers("/auth/register").hasRole("ADMIN")
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/teacher/**").hasAnyRole("ADMIN", "TEACHER")
                 .requestMatchers("/students/**").hasAnyRole("ADMIN", "TEACHER")
@@ -76,6 +77,7 @@ public class SecurityConfig {
                 .requestMatchers("/classes/**").hasAnyRole("ADMIN", "TEACHER")
                 .requestMatchers("/cascade/**").hasRole("ADMIN")
                 .requestMatchers("/subjects/**").hasAnyRole("ADMIN", "TEACHER")
+                .requestMatchers("/scores/**").hasAnyRole("ADMIN", "TEACHER")
                 .anyRequest().authenticated()
             )
             .formLogin(AbstractHttpConfigurer::disable)

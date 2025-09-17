@@ -42,7 +42,7 @@ public class Subject {
     @Column(name = "subject_name", nullable = false)
     private String subjectName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "academy_id")
     private Academy academy;
 
@@ -82,12 +82,26 @@ public class Subject {
         this.credit = credit;
     }
 
+    /**
+     * 安全地获取学院名称，避免懒加载异常
+     */
+    private String getAcademyNameSafely() {
+        if (academy == null) {
+            return null;
+        }
+        try {
+            return academy.getAcademyName();
+        } catch (Exception e) {
+            return "LazyLoaded";
+        }
+    }
+
     @Override
     public String toString() {
         return "Subject{" +
                 "subjectId=" + subjectId +
                 ", subjectName='" + subjectName + '\'' +
-                ", academy=" + (academy != null ? academy.getAcademyName() : null) +
+                ", academy=" + getAcademyNameSafely() +
                 ", credit=" + credit +
                 '}';
     }

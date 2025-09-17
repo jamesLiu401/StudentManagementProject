@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContexts';
 import { getStudentsPage, deleteStudent } from '../api/student';
+import { getMajorById } from '../api/major';
+import { getAcademyById } from '../api/academy';
 
 const Students = () => {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+    const [majors, setMajors] = useState({}); // 存储专业信息，key为majorId
+    const [academies, setAcademies] = useState({}); // 存储学院信息，key为academyId
     const { isAdmin } = useAuth();
 
     const fetchStudents = async () => {
@@ -19,8 +23,9 @@ const Students = () => {
             // 处理学生数据，避免Hibernate懒加载问题
             const processedStudents = Array.isArray(pageData.content) ? 
                 pageData.content.map(student => {
-                    // 处理班级名称，确保即使subClass是懒加载对象也能正确显示
-                    const className = student.subClassName || 
+                    // 处理班级名称，使用后端返回的 stuClassName 字段
+                    const className = student.stuClassName || 
+                        student.subClassName || 
                         (student.subClass && student.subClass.subClassName) || 
                         (student.stuClass && student.stuClass.subClassName) || 
                         '-';
@@ -28,12 +33,16 @@ const Students = () => {
                     return {
                         ...student,
                         // 确保班级名称字段存在且可用
-                        subClassName: className
+                        subClassName: className,
+                        stuClassName: className
                     };
                 }) : [];
             
             setStudents(processedStudents);
             setTotalPages(typeof pageData.totalPages === 'number' ? pageData.totalPages : 0);
+            
+            // 获取专业和学院信息
+            await loadMajorAndAcademyInfo(processedStudents);
         } catch (error) {
             console.error('获取学生列表失败', error);
             setStudents([]);
@@ -43,9 +52,84 @@ const Students = () => {
         }
     };
 
+    // 加载专业和学院信息
+    const loadMajorAndAcademyInfo = async (studentsList) => {
+        const majorsToLoad = new Set();
+        const academiesToLoad = new Set();
+        
+        // 收集需要加载的专业ID
+        studentsList.forEach(student => {
+            if (student.majorId) {
+                majorsToLoad.add(student.majorId);
+            }
+        });
+        
+        // 加载专业信息
+        for (const majorId of majorsToLoad) {
+            if (!majors[majorId]) {
+                try {
+                    const majorResponse = await getMajorById(majorId);
+                    if (majorResponse?.status === 200 && majorResponse?.data?.data) {
+                        const major = majorResponse.data.data;
+                        setMajors(prev => ({ ...prev, [majorId]: major }));
+                        
+                        // 收集需要加载的学院ID
+                        const academyId = major.academyId || (major.academy && major.academy.academyId);
+                        if (academyId) {
+                            academiesToLoad.add(academyId);
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`获取专业信息失败 (ID: ${majorId}):`, error);
+                }
+            } else {
+                // 如果专业信息已存在，检查是否需要加载学院信息
+                const major = majors[majorId];
+                const academyId = major.academyId || (major.academy && major.academy.academyId);
+                if (academyId && !academies[academyId]) {
+                    academiesToLoad.add(academyId);
+                }
+            }
+        }
+        
+        // 加载学院信息
+        for (const academyId of academiesToLoad) {
+            if (!academies[academyId]) {
+                try {
+                    const academyResponse = await getAcademyById(academyId);
+                    if (academyResponse?.status === 200 && academyResponse?.data?.data) {
+                        setAcademies(prev => ({ ...prev, [academyId]: academyResponse.data.data }));
+                    }
+                } catch (error) {
+                    console.warn(`获取学院信息失败 (ID: ${academyId}):`, error);
+                }
+            }
+        }
+    };
+
     useEffect(() => {
         fetchStudents();
     }, [page]);
+
+    // 获取专业名称的辅助函数
+    const getMajorName = (student) => {
+        if (student.majorId && majors[student.majorId]) {
+            return majors[student.majorId].majorName;
+        }
+        return student.stuMajor || '-';
+    };
+
+    // 获取学院名称的辅助函数
+    const getAcademyName = (student) => {
+        if (student.majorId && majors[student.majorId]) {
+            const major = majors[student.majorId];
+            const academyId = major.academyId || (major.academy && major.academy.academyId);
+            if (academyId && academies[academyId]) {
+                return academies[academyId].academyName;
+            }
+        }
+        return '-';
+    };
 
     const handleDelete = async (id) => {
         if (window.confirm('确定要删除这个学生吗？')) {
@@ -97,9 +181,9 @@ const Students = () => {
                                     <td>{student.stuId}</td>
                                     <td>{student.stuName}</td>
                                     <td>{student.stuGender ? '男' : '女'}</td>
-                                    <td>{student.stuMajor}</td>
-                                    <td>{student.grade}</td>
-                                    <td>{student.subClassName || '-'}</td>
+                                    <td>{getMajorName(student)}</td>
+                                    <td>{student.stuGrade ? `${student.stuGrade}级` : '-'}</td>
+                                    <td>{student.stuClassName || student.subClassName || '-'}</td>
                                     <td>
                                         <Link to={`/students/${student.stuId}`} className="btn btn-sm btn-info me-2">
                                             查看

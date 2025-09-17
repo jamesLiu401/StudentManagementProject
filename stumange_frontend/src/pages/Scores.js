@@ -64,7 +64,7 @@ const Scores = () => {
         if (scores.length > 0) {
             loadStatistics();
         }
-    }, [scores]);
+    }, [scores.length]); // 只依赖scores.length，避免不必要的重新计算
 
     // 自动清除成功消息
     useEffect(() => {
@@ -90,7 +90,8 @@ const Scores = () => {
             // 正确解析ResponseMessage结构
             if (response && response.status === 200 && response.data) {
                 const responseData = response.data;
-                if (responseData.success && responseData.data) {
+                // 检查响应状态码，而不是success字段
+                if (responseData.status === 200 && responseData.data) {
                     const pageData = responseData.data;
                     // 处理成绩数据，统一字段映射
                     const processedScores = Array.isArray(pageData.content) ? 
@@ -123,7 +124,7 @@ const Scores = () => {
             const response = await studentApi.getStudents();
             if (response && response.status === 200) {
                 const responseData = response.data;
-                if (responseData.success && responseData.data) {
+                if (responseData.status === 200 && responseData.data) {
                     setStudents(Array.isArray(responseData.data) ? responseData.data : []);
                 }
             }
@@ -137,7 +138,7 @@ const Scores = () => {
             const response = await subjectApi.getSubjects();
             if (response && response.status === 200) {
                 const responseData = response.data;
-                if (responseData.success && responseData.data) {
+                if (responseData.status === 200 && responseData.data) {
                     setSubjects(Array.isArray(responseData.data) ? responseData.data : []);
                 }
             }
@@ -166,6 +167,16 @@ const Scores = () => {
                     minScore,
                     passingCount,
                     failingCount
+                });
+            } else {
+                // 当没有数据时，重置统计信息为默认值
+                setStatistics({
+                    totalScores: 0,
+                    averageScore: 0,
+                    maxScore: 0,
+                    minScore: 0,
+                    passingCount: 0,
+                    failingCount: 0
                 });
             }
         } catch (err) {
@@ -404,7 +415,7 @@ const Scores = () => {
         return 'danger';
     };
 
-    if (loading && scores.length === 0) {
+    if (loading) {
         return (
             <Container className="text-center py-5">
                 <Spinner animation="border" role="status">

@@ -60,7 +60,10 @@ public class ScoreService implements IScoreService {
         if (!isValidScore(score.getStuScore())) {
             throw new IllegalArgumentException("成绩必须在0-100分之间");
         }
-        return scoreRepository.save(score);
+        Score savedScore = scoreRepository.save(score);
+        // 重新查询以预加载关联数据，避免懒加载异常
+        return scoreRepository.findById(savedScore.getScoreId())
+                .orElse(savedScore);
     }
     
     @Override
