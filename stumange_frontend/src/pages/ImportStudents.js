@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Container, Card, Alert, Button, Form, ProgressBar } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { importStudents } from '../api/student';
-
+//todo:完善批量导入，接入app配置
 const ImportStudents = () => {
     const navigate = useNavigate();
     const [file, setFile] = useState(null);

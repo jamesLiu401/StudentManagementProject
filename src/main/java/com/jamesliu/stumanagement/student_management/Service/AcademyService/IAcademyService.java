@@ -22,7 +22,7 @@ import java.util.Optional;
  * 
  * @author JamesLiu
  * @version 1.0
- * @since 2025-01-01
+ * @since 2025-06-27
  */
 public interface IAcademyService {
     

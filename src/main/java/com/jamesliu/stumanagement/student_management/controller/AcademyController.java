@@ -31,7 +31,7 @@ import java.util.Optional;
  * 
  * @author JamesLiu
  * @version 1.0
- * @since 2024-01-01
+ * @since 2025-07-01
  */
 @RestController
 @RequestMapping("/academies")

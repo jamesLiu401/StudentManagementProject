@@ -34,14 +34,14 @@ import java.util.function.Function;
 @Component
 public class JwtUtils {
 
-    @Value("${jwt.secret:mySecretKey}")
+    @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration:86400000}") // 24小时，单位毫秒
+    @Value("${jwt.expiration}")
     private Long expiration;
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+        return Keys.hmacShaKeyFor(getKeyFromEnv(secret).getBytes());
     }
 
     /**
@@ -127,5 +127,13 @@ public class JwtUtils {
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    private static String getKeyFromEnv(String envKeyName) {
+        String value = System.getenv(envKeyName);
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException("环境变量未配置: " + envKeyName);
+        }
+        return value;
     }
 }

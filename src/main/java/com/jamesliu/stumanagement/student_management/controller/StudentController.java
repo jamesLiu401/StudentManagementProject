@@ -48,7 +48,7 @@ public class StudentController {
     /**
      * 添加学生信息
      * 支持智能创建关联的班级、专业数据
-     * 
+     * <p>
      * 智能特性：
      * - 如果班级不存在，自动创建Major→TotalClass→SubClass
      * - 根据专业和年级自动生成班级名称

@@ -27,7 +27,7 @@ package com.jamesliu.stumanagement.student_management.utils;
  * 
  * @author JamesLiu
  * @version 1.0
- * @since 2025-09-16
+ * @since 2025-06-16
  */
 public class StripEnc {
     public static String stripEnc(String value) {
