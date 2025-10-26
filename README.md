@@ -1,12 +1,13 @@
 小菜鸡一个，不会打包，现在就npm run+ide里跑后端
+勉强跟着网上教程打了个包，跑不了
 技术栈：
-Spring boot
-maven
-react
-spring JPA
-Postsql
-jjwt
-electron
+- Spring boot
+- maven
+- react
+- spring JPA
+- Postsql
+- jjwt
+- electron
 
 ```
 src/main/java/com/jamesliu/stumanagement/student_management/
