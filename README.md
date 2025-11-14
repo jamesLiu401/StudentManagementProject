@@ -10,10 +10,10 @@
 - jjwt
 - electron
 
-a small project made in my year 2 collage as a course conclusion
-a lame project by a lame-skill person
-i don't know how to pack, now running with npm run + IDE(IntellJ IdeaU)for server.
-i've tried to pack one follow tutorial, didn't work :(
+a small project made in my year 2 collage as a course conclusion<br>
+a lame project by a lame-skill person<br>
+i don't know how to pack, now running with npm run + IDE(IntellJ IdeaU)for server.<br>
+i've tried to pack one follow tutorial, didn't work :(<br>
 ```
 src/main/java/com/jamesliu/stumanagement/student_management/
 ├── config/                          # 配置类
