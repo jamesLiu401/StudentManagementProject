@@ -1,3 +1,4 @@
+一个大二暑假至java实训期间做的小项目，说实话，一坨屎，自己都看不下去
 小菜鸡一个，不会打包，现在就npm run+ide里跑后端
 勉强跟着网上教程打了个包，跑不了
 技术栈：
@@ -8,7 +9,10 @@
 - Postsql
 - jjwt
 - electron
-
+a small project made in my year 2 collage as a course conclusion
+a lame project by a lame-skill person
+i don't know how to pack, now running with npm run + IDE(IntellJ IdeaU)for server.
+i've tried to pack one follow tutorial, didn't work :(
 ```
 src/main/java/com/jamesliu/stumanagement/student_management/
 ├── config/                          # 配置类
